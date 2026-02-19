@@ -22,19 +22,53 @@ describe('REPO_PREAMBLE', () => {
 });
 
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 5 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(5);
+  it('should define exactly 6 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(6);
   });
 
   it('should define commands in spec-driven workflow order', () => {
     const names = COMMAND_DEFINITIONS.map((c) => c.name);
     expect(names).toEqual([
+      'osddt.start',
       'osddt.spec',
       'osddt.plan',
       'osddt.tasks',
       'osddt.implement',
       'osddt.done',
     ]);
+  });
+
+  describe('osddt.start', () => {
+    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.start')!;
+
+    it('should have a description', () => {
+      expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include the $ARGUMENTS placeholder in its body', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('$ARGUMENTS');
+    });
+
+    it('should instruct deriving branch name from description when no branch is given', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('feat/<derived-name>');
+    });
+
+    it('should instruct using input as-is when it looks like a branch name', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('use it as-is');
+    });
+
+    it('should instruct creating the git branch', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('git checkout -b');
+    });
+
+    it('should instruct creating the working-on directory', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('working-on/<feature-name>');
+    });
+
+    it('should explain feature-name derivation from branch name', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
+    });
   });
 
   describe('osddt.spec', () => {

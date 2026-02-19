@@ -36,6 +36,55 @@ export interface CommandDefinition {
 
 export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
+    name: 'osddt.start',
+    description: 'Start a new feature by creating a branch and working-on folder',
+    body: (args) => `## Instructions
+
+The argument provided is: ${args}
+
+Determine the branch name using the following logic:
+
+1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`fix/some-bug\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), use it as-is.
+2. Otherwise treat ${args} as a human-readable feature description and derive a branch name from it:
+   - Convert to lowercase
+   - Replace spaces and special characters with hyphens
+   - Use the format \`feat/<derived-name>\`
+   - Example: "Add user authentication" → \`feat/add-user-authentication\`
+
+Once the branch name is determined:
+
+3. Create and switch to the branch:
+
+\`\`\`
+git checkout -b <branch-name>
+\`\`\`
+
+4. Read the \`.osddtrc\` file in the root of the repository to determine the project path.
+
+\`\`\`json
+// .osddtrc example
+{ "repoType": "monorepo" | "single" }
+\`\`\`
+
+- If \`repoType\` is \`"single"\`: the project path is the repository root.
+- If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
+
+5. Create the working directory:
+
+\`\`\`
+mkdir -p <project-path>/working-on/<feature-name>
+\`\`\`
+
+Where \`<feature-name>\` is the last segment of the branch name (after the last \`/\`, or the full branch name if no \`/\` is present).
+
+6. Report the branch name and working directory that were created.
+
+## Arguments
+
+${args}
+`,
+  },
+  {
     name: 'osddt.spec',
     description: 'Analyze requirements and write a feature specification',
     body: (args) => `${REPO_PREAMBLE}## Instructions
