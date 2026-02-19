@@ -69,6 +69,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should explain feature-name derivation from branch name', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
     });
+
+    it('should prompt the user to run osddt.spec as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
+    });
   });
 
   describe('osddt.spec', () => {
@@ -85,6 +89,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should instruct writing to osddt.spec.md', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.spec.md');
     });
+
+    it('should prompt the user to run osddt.plan as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.plan $ARGUMENTS');
+    });
   });
 
   describe('osddt.plan', () => {
@@ -96,6 +104,10 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should instruct writing to osddt.plan.md', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.plan.md');
+    });
+
+    it('should prompt the user to run osddt.tasks as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.tasks $ARGUMENTS');
     });
   });
 
@@ -109,6 +121,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should instruct writing to osddt.tasks.md', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
     });
+
+    it('should prompt the user to run osddt.implement as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.implement $ARGUMENTS');
+    });
   });
 
   describe('osddt.implement', () => {
@@ -120,6 +136,10 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should instruct implementing one task at a time', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('one task at a time');
+    });
+
+    it('should prompt the user to run osddt.done as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.done $ARGUMENTS');
     });
   });
 

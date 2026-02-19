@@ -82,6 +82,14 @@ Where \`<feature-name>\` is the last segment of the branch name (after the last 
 ## Arguments
 
 ${args}
+
+## Next Step
+
+Run the following command to write the feature specification:
+
+\`\`\`
+/osddt.spec ${args}
+\`\`\`
 `,
   },
   {
@@ -106,6 +114,14 @@ The spec should include:
 ## Arguments
 
 ${args}
+
+## Next Step
+
+Run the following command to create the implementation plan:
+
+\`\`\`
+/osddt.plan ${args}
+\`\`\`
 `,
   },
   {
@@ -130,6 +146,14 @@ The plan should include:
 ## Arguments
 
 ${args}
+
+## Next Step
+
+Run the following command to generate the task list:
+
+\`\`\`
+/osddt.tasks ${args}
+\`\`\`
 `,
   },
   {
@@ -153,6 +177,14 @@ The task list should include:
 ## Arguments
 
 ${args}
+
+## Next Step
+
+Run the following command to start implementing tasks:
+
+\`\`\`
+/osddt.implement ${args}
+\`\`\`
 `,
   },
   {
@@ -176,6 +208,14 @@ ${args}
 ## Arguments
 
 ${args}
+
+## Next Step
+
+Once all tasks are checked off, run the following command to mark the feature as done:
+
+\`\`\`
+/osddt.done ${args}
+\`\`\`
 `,
   },
   {
