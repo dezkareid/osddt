@@ -26,7 +26,7 @@ describe('COMMAND_DEFINITIONS', () => {
     expect(COMMAND_DEFINITIONS).toHaveLength(7);
   });
 
-  it('should define commands in spec-driven workflow order', () => {
+  it('should list osddt.research and osddt.start as peer entry points followed by the rest of the workflow', () => {
     const names = COMMAND_DEFINITIONS.map((c) => c.name);
     expect(names).toEqual([
       'osddt.research',
@@ -69,8 +69,8 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('Open Questions');
     });
 
-    it('should prompt the user to run osddt.start as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.start $ARGUMENTS');
+    it('should prompt the user to run osddt.spec as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
     });
   });
 
@@ -106,11 +106,7 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
     });
 
-    it('should offer osddt.research as an optional next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.research $ARGUMENTS');
-    });
-
-    it('should offer osddt.spec as the direct next step', () => {
+    it('should prompt the user to run osddt.spec as the next step', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
     });
   });

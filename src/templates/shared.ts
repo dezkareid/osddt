@@ -91,10 +91,10 @@ ${args}
 
 ## Next Step
 
-Run the following command to start the feature and create the branch:
+Run the following command to write the feature specification:
 
 \`\`\`
-/osddt.start ${args}
+/osddt.spec ${args}
 \`\`\`
 `,
   },
@@ -148,13 +148,7 @@ ${args}
 
 ## Next Step
 
-If you want to research the topic before writing the specification, run:
-
-\`\`\`
-/osddt.research ${args}
-\`\`\`
-
-Otherwise, run the following command to write the feature specification directly:
+Run the following command to write the feature specification:
 
 \`\`\`
 /osddt.spec ${args}
