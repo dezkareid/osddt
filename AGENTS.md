@@ -44,6 +44,10 @@ Command content with {SCRIPT} and {{args}} placeholders.
 """
 ```
 
+## Commit Message Format
+
+Always use Conventional Commits format for commit messages.
+
 ## Directory Conventions
 
 - **CLI agents**: Usually `.<agent-name>/commands/`
