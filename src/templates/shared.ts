@@ -1,16 +1,28 @@
-export const REPO_PREAMBLE = `## Repository Configuration
+export const REPO_PREAMBLE = `## Context
 
-Before proceeding, read the \`.osddtrc\` file in the root of the repository to determine the repository type.
+Before proceeding, run the following command and parse the JSON output to get the current branch and date:
+
+\`\`\`
+npx osddt meta-info
+\`\`\`
+
+## Repository Configuration
+
+Before proceeding, read the \`.osddtrc\` file in the root of the repository to determine the project path.
 
 \`\`\`json
 // .osddtrc example
 { "repoType": "monorepo" | "single" }
 \`\`\`
 
-- If \`repoType\` is \`"single"\`: use the repository root as the working directory for all generated files.
-- If \`repoType\` is \`"monorepo"\`: ask the user for the relative path to the target package (e.g. \`packages/my-feature\`), then use that directory as the working directory for all generated files. Create the directory if it does not exist.
+- If \`repoType\` is \`"single"\`: the project path is the repository root.
+- If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
 
-> All file paths in the instructions below are relative to the resolved working directory.
+## Working Directory
+
+All generated files live under \`<project-path>/working-on/<feature-name>/\`. The \`<feature-name>\` is derived from the arguments provided. Create the directory if it does not exist.
+
+> All file paths in the instructions below are relative to \`<project-path>/working-on/<feature-name>/\`.
 
 `;
 
@@ -111,6 +123,25 @@ ${args}
 - Follow the existing code style and conventions
 - Write tests for new functionality when applicable
 - Ask for clarification if requirements are ambiguous
+
+## Arguments
+
+${args}
+`,
+  },
+  {
+    name: 'osddt.done',
+    description: 'Mark a feature as done and move it from working-on to done',
+    body: (args) => `${REPO_PREAMBLE}## Instructions
+
+1. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
+2. Run the following command to move the feature folder from \`working-on\` to \`done\`:
+
+\`\`\`
+npx osddt done ${args}
+\`\`\`
+
+3. Report the result of the command
 
 ## Arguments
 

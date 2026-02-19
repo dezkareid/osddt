@@ -12,5 +12,5 @@ export default {
       tsconfig: './tsconfig.json',
     }),
   ],
-  external: ['commander', 'fs-extra', 'path', 'fs', 'url', '@inquirer/select'],
+  external: ['commander', 'fs-extra', 'path', 'fs', 'url', 'child_process', '@inquirer/select'],
 };

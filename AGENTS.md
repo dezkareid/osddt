@@ -89,3 +89,24 @@ Always prefer use exact versions for dependencies. Do not use `^` or `~`.
 
 ## Project Structure & Conventions
 - **Package Manager**: `npm` is the required package manager.
+
+## Testing
+
+### Approach
+
+Tests are written using **Vitest** and follow **BDD (Behaviour-Driven Development)** conventions:
+
+- Test files live next to the source files they cover, using the `.spec.ts` suffix.
+- Tests are structured with `describe` blocks that express the context ("given …") and `it` blocks that express the expected behaviour ("should …").
+- Side effects (filesystem, child processes, `process.exit`) are isolated with `vi.mock` / `vi.spyOn` so tests remain fast and deterministic.
+- Pure functions (template generators) are tested without mocks.
+
+### Running Tests
+
+```bash
+# Run the full test suite once
+npm test
+
+# Run in watch mode during development
+npm run test:watch
+```
