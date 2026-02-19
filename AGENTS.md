@@ -133,3 +133,7 @@ npm test
 # Run in watch mode during development
 npm run test:watch
 ```
+
+## Documentation
+
+When a command in templates or npx commands are added/updated/removed/renamed/deprecated, ask to update the AGENTS.md and README.md files.
