@@ -94,6 +94,25 @@ Always prefer use exact versions for dependencies. Do not use `^` or `~`.
 ### Project Structure & Conventions
 - **Package Manager**: `npm` is the required package manager.
 
+### CLI Commands
+
+All commands available via `npx osddt <command>`:
+
+| Command                        | Description                                                   |
+| ------------------------------ | ------------------------------------------------------------- |
+| `osddt setup`                  | Generate agent command files for Claude and Gemini            |
+| `osddt meta-info`              | Output current branch and date as JSON                        |
+| `osddt done <feature-name>`    | Move `working-on/<feature>` to `done/<feature>`               |
+
+### Template Data Convention
+
+When a template needs dynamic information (e.g. current branch, date, repo config), **do not pass it as a build-time argument**. Instead:
+
+1. Create an `npx osddt <command>` that outputs the data (preferably as JSON).
+2. Reference that command in the template body, instructing the agent to run it at invocation time.
+
+This keeps generated files deterministic and ensures agents always get live values.
+
 ## Testing
 
 ### Approach
