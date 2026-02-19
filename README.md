@@ -13,16 +13,19 @@ Other spec driven development tool but for monorepo
 
 Run `osddt setup` once to generate the agent command files.
 
-`osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`.
+`osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. Use `osddt.continue` to resume an in-progress feature from a new session.
 
 ```
-osddt.research ──┐
-                 ├──► osddt.spec → osddt.plan → osddt.tasks → osddt.implement → osddt.done
+osddt.continue ──────────────────────────────────────────────────────────────────────────────┐
+                                                                                              │
+osddt.research ──┐                                                                            │
+                 ├──► osddt.spec → osddt.plan → osddt.tasks → osddt.implement → osddt.done ◄─┘
 osddt.start    ──┘
 ```
 
 | Template           | Description                                                        |
 | ------------------ | ------------------------------------------------------------------ |
+| `osddt.continue`   | Detect the current workflow phase and prompt the next command      |
 | `osddt.research`   | Research a topic and write a research file to inform the spec      |
 | `osddt.start`      | Start a new feature by creating a branch and working-on folder     |
 | `osddt.spec`       | Analyze requirements and write a feature specification             |
