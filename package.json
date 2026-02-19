@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "description": "Package for Spec-Driven Development workflow",
   "keywords": [
-    "setup",
-    "package",
-    "npm",
     "spec-driven",
     "cli"
   ],
@@ -23,12 +20,13 @@
     "format": "prettier --write src"
   },
   "dependencies": {
+    "@inquirer/select": "5.0.7",
     "commander": "12.0.0",
     "fs-extra": "11.2.0",
-    "tslib": "^2.8.1"
+    "tslib": "2.8.1"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^12.1.4",
+    "@rollup/plugin-typescript": "12.1.4",
     "@types/fs-extra": "11.0.4",
     "@types/node": "25.0.10",
     "eslint": "9.39.2",
