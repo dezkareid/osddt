@@ -7,18 +7,32 @@ interface CommandFile {
 
 const CLAUDE_COMMANDS_DIR = '.claude/commands';
 
+const REPO_PREAMBLE = `## Repository Configuration
+
+Before proceeding, read the \`.osddtrc\` file in the root of the repository to determine the repository type.
+
+\`\`\`json
+// .osddtrc example
+{ "repoType": "monorepo" | "single" }
+\`\`\`
+
+- If \`repoType\` is \`"single"\`: use the repository root as the working directory for all generated files.
+- If \`repoType\` is \`"monorepo"\`: ask the user for the relative path to the target package (e.g. \`packages/my-feature\`), then use that directory as the working directory for all generated files. Create the directory if it does not exist.
+
+> All file paths in the instructions below are relative to the resolved working directory.
+
+`;
+
 const specContent = `---
 description: "Analyze requirements and write a feature specification"
 ---
 
-You are a spec-driven development assistant. Your task is to analyze the given requirements and produce a clear, structured specification document.
-
-## Instructions
+${REPO_PREAMBLE}## Instructions
 
 1. Analyze the requirements provided in $ARGUMENTS
 2. Identify the core problem being solved
 3. Define the scope, constraints, and acceptance criteria
-4. Write the specification to \`osddt.spec.md\` in the current directory
+4. Write the specification to \`osddt.spec.md\` in the working directory
 
 ## Specification Format
 
@@ -38,14 +52,12 @@ const planContent = `---
 description: "Create a technical implementation plan from a specification"
 ---
 
-You are a spec-driven development assistant. Your task is to read the existing specification and produce a detailed technical plan.
+${REPO_PREAMBLE}## Instructions
 
-## Instructions
-
-1. Read \`osddt.spec.md\` in the current directory
+1. Read \`osddt.spec.md\` from the working directory
 2. Break down the implementation into logical phases and steps
 3. Identify technical decisions, dependencies, and risks
-4. Write the plan to \`osddt.plan.md\` in the current directory
+4. Write the plan to \`osddt.plan.md\` in the working directory
 
 ## Plan Format
 
@@ -65,14 +77,12 @@ const tasksContent = `---
 description: "Generate actionable tasks from an implementation plan"
 ---
 
-You are a spec-driven development assistant. Your task is to convert the implementation plan into a concrete, actionable task list.
+${REPO_PREAMBLE}## Instructions
 
-## Instructions
-
-1. Read \`osddt.plan.md\` in the current directory
+1. Read \`osddt.plan.md\` from the working directory
 2. Break each phase into discrete, executable tasks
 3. Estimate complexity (S/M/L) for each task
-4. Write the task list to \`osddt.tasks.md\` in the current directory
+4. Write the task list to \`osddt.tasks.md\` in the working directory
 
 ## Tasks Format
 
@@ -91,13 +101,11 @@ const implementContent = `---
 description: "Execute tasks from the task list one by one"
 ---
 
-You are a spec-driven development assistant. Your task is to implement the next pending task from the task list.
+${REPO_PREAMBLE}## Instructions
 
-## Instructions
-
-1. Read \`osddt.tasks.md\` in the current directory
+1. Read \`osddt.tasks.md\` from the working directory
 2. Find the next unchecked task (\`- [ ]\`)
-3. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`)
+3. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`) in the working directory
 4. Mark the task as complete (\`- [x]\`) in \`osddt.tasks.md\`
 5. Report what was done and any issues encountered
 
