@@ -26,6 +26,28 @@ All generated files live under \`<project-path>/working-on/<feature-name>/\`. Th
 
 `;
 
+export const FEATURE_NAME_RULES = `### Feature Name Constraints
+
+When deriving a feature name from a description:
+
+- Use only lowercase letters, digits, and hyphens (\`a-z\`, \`0-9\`, \`-\`)
+- Replace spaces and special characters with hyphens
+- Remove consecutive hyphens (e.g. \`--\` → \`-\`)
+- Remove leading and trailing hyphens
+- **Maximum length: 30 characters** — if the derived name exceeds 30 characters, truncate at the last hyphen boundary before or at the 30th character
+- If the input is already a valid branch name (no spaces, kebab-case or slash-separated), apply the 30-character limit to the last segment only (after the last \`/\`)
+- Reject (and ask the user to provide a shorter name) if no valid name can be derived after truncation
+
+**Examples:**
+
+| Input | Derived feature name |
+| ----------------------------------------------------- | ---------------------------- |
+| \`Add user authentication\` | \`add-user-authentication\` |
+| \`Implement real-time notifications for dashboard\` | \`implement-real-time\` |
+| \`feat/add-user-authentication\` | \`add-user-authentication\` |
+| \`feat/implement-real-time-notifications-for-dashboard\` | \`implement-real-time\` |
+`;
+
 export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
 
 export interface CommandDefinition {
@@ -45,10 +67,11 @@ The argument provided is: ${args}
 Determine the feature name using the following logic:
 
 1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), derive the feature name from the last segment (after the last \`/\`, or the full value if no \`/\` is present).
-2. Otherwise treat ${args} as a human-readable topic description and derive a feature name from it:
-   - Convert to lowercase
-   - Replace spaces and special characters with hyphens
-   - Example: "Add user authentication" → \`add-user-authentication\`
+2. Otherwise treat ${args} as a human-readable topic description and convert it to a feature name.
+
+Apply the constraints below before using the name:
+
+${FEATURE_NAME_RULES}
 
 Once the feature name is determined:
 
@@ -108,11 +131,11 @@ The argument provided is: ${args}
 Determine the branch name using the following logic:
 
 1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`fix/some-bug\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), use it as-is.
-2. Otherwise treat ${args} as a human-readable feature description and derive a branch name from it:
-   - Convert to lowercase
-   - Replace spaces and special characters with hyphens
-   - Use the format \`feat/<derived-name>\`
-   - Example: "Add user authentication" → \`feat/add-user-authentication\`
+2. Otherwise treat ${args} as a human-readable feature description, convert it to a feature name, and use the format \`feat/<derived-name>\` as the branch name.
+
+Apply the constraints below to the feature name (the segment after the last \`/\`) before using it:
+
+${FEATURE_NAME_RULES}
 
 Once the branch name is determined:
 

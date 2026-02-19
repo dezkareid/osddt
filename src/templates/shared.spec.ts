@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { REPO_PREAMBLE, COMMAND_DEFINITIONS } from './shared.js';
+import { REPO_PREAMBLE, FEATURE_NAME_RULES, COMMAND_DEFINITIONS } from './shared.js';
 
 describe('REPO_PREAMBLE', () => {
   it('should instruct the agent to run npx osddt meta-info', () => {
@@ -18,6 +18,38 @@ describe('REPO_PREAMBLE', () => {
   it('should explain monorepo project path resolution', () => {
     expect(REPO_PREAMBLE).toContain('"monorepo"');
     expect(REPO_PREAMBLE).toContain('packages/my-package');
+  });
+});
+
+describe('FEATURE_NAME_RULES', () => {
+  it('should enforce a maximum length of 30 characters', () => {
+    expect(FEATURE_NAME_RULES).toContain('Maximum length: 30 characters');
+  });
+
+  it('should allow only lowercase letters, digits, and hyphens', () => {
+    expect(FEATURE_NAME_RULES).toContain('a-z');
+    expect(FEATURE_NAME_RULES).toContain('0-9');
+    expect(FEATURE_NAME_RULES).toContain('-');
+  });
+
+  it('should instruct truncating at a hyphen boundary', () => {
+    expect(FEATURE_NAME_RULES).toContain('truncate at the last hyphen boundary');
+  });
+
+  it('should instruct removing consecutive hyphens', () => {
+    expect(FEATURE_NAME_RULES).toContain('consecutive hyphens');
+  });
+
+  it('should instruct removing leading and trailing hyphens', () => {
+    expect(FEATURE_NAME_RULES).toContain('leading and trailing hyphens');
+  });
+
+  it('should instruct rejecting names that cannot be derived after truncation', () => {
+    expect(FEATURE_NAME_RULES).toContain('ask the user to provide a shorter name');
+  });
+
+  it('should apply the 30-character limit to the last segment of a branch name', () => {
+    expect(FEATURE_NAME_RULES).toContain('last segment only');
   });
 });
 
@@ -69,6 +101,10 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('Open Questions');
     });
 
+    it('should apply feature name constraints', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
+    });
+
     it('should prompt the user to run osddt.spec as the next step', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
     });
@@ -104,6 +140,10 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should explain feature-name derivation from branch name', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
+    });
+
+    it('should apply feature name constraints', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
