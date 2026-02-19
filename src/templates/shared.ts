@@ -48,6 +48,15 @@ When deriving a feature name from a description:
 | \`feat/implement-real-time-notifications-for-dashboard\` | \`implement-real-time\` |
 `;
 
+export const WORKING_DIR_STEP = `Check whether the working directory \`<project-path>/working-on/<feature-name>\` already exists:
+   - If it **does not exist**, create it:
+     \`\`\`
+     mkdir -p <project-path>/working-on/<feature-name>
+     \`\`\`
+   - If it **already exists**, warn the user and ask whether to:
+     - **Resume** — continue into the existing folder (proceed to the next step without recreating it)
+     - **Abort** — stop and do nothing`;
+
 export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
 
 export interface CommandDefinition {
@@ -85,14 +94,7 @@ Once the feature name is determined:
 - If \`repoType\` is \`"single"\`: the project path is the repository root.
 - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
 
-4. Check whether the working directory \`<project-path>/working-on/<feature-name>\` already exists:
-   - If it **does not exist**, create it:
-     \`\`\`
-     mkdir -p <project-path>/working-on/<feature-name>
-     \`\`\`
-   - If it **already exists**, warn the user and ask whether to:
-     - **Resume** — continue into the existing folder (proceed to the next step without recreating it)
-     - **Abort** — stop and do nothing
+4. ${WORKING_DIR_STEP}
 
 5. Research the topic thoroughly:
    - Explore the existing codebase for relevant patterns, conventions, and prior art
@@ -161,12 +163,7 @@ Once the branch name is determined:
 - If \`repoType\` is \`"single"\`: the project path is the repository root.
 - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
 
-5. Check whether the working directory \`<project-path>/working-on/<feature-name>\` already exists:
-   - If it **does not exist**, create it:
-     \`\`\`
-     mkdir -p <project-path>/working-on/<feature-name>
-     \`\`\`
-   - If it **already exists**, inform the user and continue without recreating it.
+5. ${WORKING_DIR_STEP}
 
 Where \`<feature-name>\` is the last segment of the branch name (after the last \`/\`, or the full branch name if no \`/\` is present).
 

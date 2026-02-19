@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { REPO_PREAMBLE, FEATURE_NAME_RULES, COMMAND_DEFINITIONS } from './shared.js';
+import { REPO_PREAMBLE, FEATURE_NAME_RULES, WORKING_DIR_STEP, COMMAND_DEFINITIONS } from './shared.js';
 
 describe('REPO_PREAMBLE', () => {
   it('should instruct the agent to run npx osddt meta-info', () => {
@@ -50,6 +50,22 @@ describe('FEATURE_NAME_RULES', () => {
 
   it('should apply the 30-character limit to the last segment of a branch name', () => {
     expect(FEATURE_NAME_RULES).toContain('last segment only');
+  });
+});
+
+describe('WORKING_DIR_STEP', () => {
+  it('should instruct checking whether the working directory already exists', () => {
+    expect(WORKING_DIR_STEP).toContain('working-on/<feature-name>');
+    expect(WORKING_DIR_STEP).toContain('already exists');
+  });
+
+  it('should instruct creating the directory when it does not exist', () => {
+    expect(WORKING_DIR_STEP).toContain('mkdir -p <project-path>/working-on/<feature-name>');
+  });
+
+  it('should offer Resume and Abort when the directory exists', () => {
+    expect(WORKING_DIR_STEP).toContain('Resume');
+    expect(WORKING_DIR_STEP).toContain('Abort');
   });
 });
 
@@ -105,11 +121,8 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
     });
 
-    it('should warn and offer Resume or Abort when working directory already exists', () => {
-      const body = cmd.body('$ARGUMENTS');
-      expect(body).toContain('already exists');
-      expect(body).toContain('Resume');
-      expect(body).toContain('Abort');
+    it('should include the shared working directory check step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain(WORKING_DIR_STEP);
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
@@ -141,10 +154,6 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('git checkout -b');
     });
 
-    it('should instruct creating the working-on directory', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('working-on/<feature-name>');
-    });
-
     it('should explain feature-name derivation from branch name', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
     });
@@ -160,10 +169,8 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('Abort');
     });
 
-    it('should inform the user and continue when working directory already exists', () => {
-      const body = cmd.body('$ARGUMENTS');
-      expect(body).toContain('already exists');
-      expect(body).toContain('inform the user and continue');
+    it('should include the shared working directory check step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain(WORKING_DIR_STEP);
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
