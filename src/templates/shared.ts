@@ -85,11 +85,14 @@ Once the feature name is determined:
 - If \`repoType\` is \`"single"\`: the project path is the repository root.
 - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
 
-4. Create the working directory if it does not exist:
-
-\`\`\`
-mkdir -p <project-path>/working-on/<feature-name>
-\`\`\`
+4. Check whether the working directory \`<project-path>/working-on/<feature-name>\` already exists:
+   - If it **does not exist**, create it:
+     \`\`\`
+     mkdir -p <project-path>/working-on/<feature-name>
+     \`\`\`
+   - If it **already exists**, warn the user and ask whether to:
+     - **Resume** — continue into the existing folder (proceed to the next step without recreating it)
+     - **Abort** — stop and do nothing
 
 5. Research the topic thoroughly:
    - Explore the existing codebase for relevant patterns, conventions, and prior art
@@ -139,11 +142,14 @@ ${FEATURE_NAME_RULES}
 
 Once the branch name is determined:
 
-3. Create and switch to the branch:
-
-\`\`\`
-git checkout -b <branch-name>
-\`\`\`
+3. Check whether the branch already exists locally or remotely:
+   - If it **does not exist**, create and switch to it:
+     \`\`\`
+     git checkout -b <branch-name>
+     \`\`\`
+   - If it **already exists**, warn the user and ask whether to:
+     - **Resume** — switch to the existing branch (\`git checkout <branch-name>\`) and continue
+     - **Abort** — stop and do nothing
 
 4. Read the \`.osddtrc\` file in the root of the repository to determine the project path.
 
@@ -155,15 +161,16 @@ git checkout -b <branch-name>
 - If \`repoType\` is \`"single"\`: the project path is the repository root.
 - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
 
-5. Create the working directory:
-
-\`\`\`
-mkdir -p <project-path>/working-on/<feature-name>
-\`\`\`
+5. Check whether the working directory \`<project-path>/working-on/<feature-name>\` already exists:
+   - If it **does not exist**, create it:
+     \`\`\`
+     mkdir -p <project-path>/working-on/<feature-name>
+     \`\`\`
+   - If it **already exists**, inform the user and continue without recreating it.
 
 Where \`<feature-name>\` is the last segment of the branch name (after the last \`/\`, or the full branch name if no \`/\` is present).
 
-6. Report the branch name and working directory that were created.
+6. Report the branch name and working directory that were created or resumed.
 
 ## Arguments
 

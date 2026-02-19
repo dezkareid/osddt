@@ -105,6 +105,13 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
     });
 
+    it('should warn and offer Resume or Abort when working directory already exists', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('already exists');
+      expect(body).toContain('Resume');
+      expect(body).toContain('Abort');
+    });
+
     it('should prompt the user to run osddt.spec as the next step', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
     });
@@ -144,6 +151,19 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should apply feature name constraints', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
+    });
+
+    it('should warn and offer Resume or Abort when branch already exists', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('already exists');
+      expect(body).toContain('Resume');
+      expect(body).toContain('Abort');
+    });
+
+    it('should inform the user and continue when working directory already exists', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('already exists');
+      expect(body).toContain('inform the user and continue');
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
