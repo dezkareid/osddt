@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 
 vi.mock('fs-extra');
 
@@ -6,6 +6,16 @@ import fs from 'fs-extra';
 import { doneCommand } from './done.js';
 
 describe('done command', () => {
+  let datePrefix: string;
+
+  beforeAll(() => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    datePrefix = `${yyyy}-${mm}-${dd}`;
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -21,7 +31,7 @@ describe('done command', () => {
       vi.mocked(fs.move).mockResolvedValue(undefined);
     });
 
-    it('should move the feature folder from working-on to done', async () => {
+    it('should move the feature folder from working-on to done with a date prefix', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const cmd = doneCommand();
@@ -29,10 +39,10 @@ describe('done command', () => {
 
       expect(fs.move).toHaveBeenCalledWith(
         expect.stringContaining('working-on/my-feature'),
-        expect.stringContaining('done/my-feature'),
+        expect.stringContaining(`done/${datePrefix}-my-feature`),
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('working-on/my-feature'),
+        expect.stringContaining(`done/${datePrefix}-my-feature`),
       );
     });
   });

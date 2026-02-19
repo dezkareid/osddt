@@ -272,5 +272,11 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should instruct verifying all tasks are checked off', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
     });
+
+    it('should inform the agent that the destination folder is prefixed with the date', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('YYYY-MM-DD');
+      expect(body).toContain('YYYY-MM-DD-feature-a');
+    });
   });
 });

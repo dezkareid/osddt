@@ -2,6 +2,14 @@ import { Command } from 'commander';
 import path from 'path';
 import fs from 'fs-extra';
 
+function todayPrefix(): string {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 async function runDone(featureName: string, cwd: string): Promise<void> {
   const configPath = path.join(cwd, '.osddtrc');
 
@@ -14,7 +22,8 @@ async function runDone(featureName: string, cwd: string): Promise<void> {
   const projectPath = cwd;
 
   const src = path.join(projectPath, 'working-on', featureName);
-  const dest = path.join(projectPath, 'done', featureName);
+  const destName = `${todayPrefix()}-${featureName}`;
+  const dest = path.join(projectPath, 'done', destName);
 
   if (!(await fs.pathExists(src))) {
     console.error(`Error: working-on/${featureName} does not exist.`);
@@ -24,7 +33,7 @@ async function runDone(featureName: string, cwd: string): Promise<void> {
   await fs.ensureDir(path.dirname(dest));
   await fs.move(src, dest);
 
-  console.log(`Moved: working-on/${featureName} → done/${featureName}`);
+  console.log(`Moved: working-on/${featureName} → done/${destName}`);
 }
 
 export function doneCommand(): Command {

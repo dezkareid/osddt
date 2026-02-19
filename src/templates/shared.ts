@@ -325,7 +325,10 @@ Once all tasks are checked off, run the following command to mark the feature as
 npx osddt done ${args}
 \`\`\`
 
-3. Report the result of the command
+   The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.
+   For example, \`working-on/feature-a\` will be moved to \`done/YYYY-MM-DD-feature-a\`.
+
+3. Report the result of the command, including the full destination path
 
 ## Arguments
 
