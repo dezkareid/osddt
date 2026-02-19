@@ -36,6 +36,69 @@ export interface CommandDefinition {
 
 export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
+    name: 'osddt.research',
+    description: 'Research a topic and write a research file to inform the feature specification',
+    body: (args) => `## Instructions
+
+The argument provided is: ${args}
+
+Determine the feature name using the following logic:
+
+1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), derive the feature name from the last segment (after the last \`/\`, or the full value if no \`/\` is present).
+2. Otherwise treat ${args} as a human-readable topic description and derive a feature name from it:
+   - Convert to lowercase
+   - Replace spaces and special characters with hyphens
+   - Example: "Add user authentication" → \`add-user-authentication\`
+
+Once the feature name is determined:
+
+3. Read the \`.osddtrc\` file in the root of the repository to determine the project path.
+
+\`\`\`json
+// .osddtrc example
+{ "repoType": "monorepo" | "single" }
+\`\`\`
+
+- If \`repoType\` is \`"single"\`: the project path is the repository root.
+- If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
+
+4. Create the working directory if it does not exist:
+
+\`\`\`
+mkdir -p <project-path>/working-on/<feature-name>
+\`\`\`
+
+5. Research the topic thoroughly:
+   - Explore the existing codebase for relevant patterns, conventions, and prior art
+   - Identify related files, modules, and dependencies
+   - Note any constraints, risks, or open questions
+
+6. Write the findings to \`osddt.research.md\` in the working directory using the following format:
+
+## Research Format
+
+The research file should include:
+- **Topic**: What was researched and why
+- **Codebase Findings**: Relevant existing code, patterns, and conventions found
+- **External References**: Libraries, APIs, or documentation consulted
+- **Key Insights**: Important discoveries that should inform the specification
+- **Constraints & Risks**: Known limitations or risks uncovered during research
+- **Open Questions**: Ambiguities that the specification phase should resolve
+
+## Arguments
+
+${args}
+
+## Next Step
+
+Run the following command to start the feature and create the branch:
+
+\`\`\`
+/osddt.start ${args}
+\`\`\`
+`,
+  },
+  {
     name: 'osddt.start',
     description: 'Start a new feature by creating a branch and working-on folder',
     body: (args) => `## Instructions
@@ -85,7 +148,13 @@ ${args}
 
 ## Next Step
 
-Run the following command to write the feature specification:
+If you want to research the topic before writing the specification, run:
+
+\`\`\`
+/osddt.research ${args}
+\`\`\`
+
+Otherwise, run the following command to write the feature specification directly:
 
 \`\`\`
 /osddt.spec ${args}
@@ -97,10 +166,13 @@ Run the following command to write the feature specification:
     description: 'Analyze requirements and write a feature specification',
     body: (args) => `${REPO_PREAMBLE}## Instructions
 
-1. Analyze the requirements provided in ${args}
-2. Identify the core problem being solved
-3. Define the scope, constraints, and acceptance criteria
-4. Write the specification to \`osddt.spec.md\` in the working directory
+1. Check whether \`osddt.research.md\` exists in the working directory.
+   - If it exists, read it and use its findings (key insights, constraints, open questions, codebase findings) as additional context when writing the specification.
+   - If it does not exist, proceed using only the requirements provided in ${args}.
+2. Analyze the requirements provided in ${args}
+3. Identify the core problem being solved
+4. Define the scope, constraints, and acceptance criteria
+5. Write the specification to \`osddt.spec.md\` in the working directory
 
 ## Specification Format
 
@@ -110,6 +182,8 @@ The spec should include:
 - **Scope**: What is in and out of scope
 - **Acceptance Criteria**: Clear, testable criteria
 - **Open Questions**: Any ambiguities to resolve
+
+> If \`osddt.research.md\` was found, add a **Research Summary** section that briefly references the key insights and constraints it identified.
 
 ## Arguments
 

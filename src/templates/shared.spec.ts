@@ -22,13 +22,14 @@ describe('REPO_PREAMBLE', () => {
 });
 
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 6 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(6);
+  it('should define exactly 7 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(7);
   });
 
   it('should define commands in spec-driven workflow order', () => {
     const names = COMMAND_DEFINITIONS.map((c) => c.name);
     expect(names).toEqual([
+      'osddt.research',
       'osddt.start',
       'osddt.spec',
       'osddt.plan',
@@ -36,6 +37,41 @@ describe('COMMAND_DEFINITIONS', () => {
       'osddt.implement',
       'osddt.done',
     ]);
+  });
+
+  describe('osddt.research', () => {
+    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.research')!;
+
+    it('should have a description', () => {
+      expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include the $ARGUMENTS placeholder in its body', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('$ARGUMENTS');
+    });
+
+    it('should instruct writing to osddt.research.md', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('osddt.research.md');
+    });
+
+    it('should instruct creating the working-on directory', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('working-on/<feature-name>');
+    });
+
+    it('should instruct exploring the existing codebase', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('existing codebase');
+    });
+
+    it('should define a research file format with key sections', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('Key Insights');
+      expect(body).toContain('Constraints & Risks');
+      expect(body).toContain('Open Questions');
+    });
+
+    it('should prompt the user to run osddt.start as the next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.start $ARGUMENTS');
+    });
   });
 
   describe('osddt.start', () => {
@@ -70,7 +106,11 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
     });
 
-    it('should prompt the user to run osddt.spec as the next step', () => {
+    it('should offer osddt.research as an optional next step', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.research $ARGUMENTS');
+    });
+
+    it('should offer osddt.spec as the direct next step', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
     });
   });
@@ -88,6 +128,22 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should instruct writing to osddt.spec.md', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.spec.md');
+    });
+
+    it('should instruct checking for osddt.research.md', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('osddt.research.md');
+    });
+
+    it('should instruct using research findings when the file exists', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('key insights, constraints, open questions, codebase findings');
+    });
+
+    it('should instruct proceeding without research when the file does not exist', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('does not exist, proceed');
+    });
+
+    it('should instruct adding a Research Summary section when research was found', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('Research Summary');
     });
 
     it('should prompt the user to run osddt.plan as the next step', () => {
