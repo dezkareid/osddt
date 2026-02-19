@@ -70,13 +70,14 @@ describe('WORKING_DIR_STEP', () => {
 });
 
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 7 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(7);
+  it('should define exactly 8 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(8);
   });
 
-  it('should list osddt.research and osddt.start as peer entry points followed by the rest of the workflow', () => {
+  it('should list commands with osddt.continue first, then peer entry points, then the rest of the workflow', () => {
     const names = COMMAND_DEFINITIONS.map((c) => c.name);
     expect(names).toEqual([
+      'osddt.continue',
       'osddt.research',
       'osddt.start',
       'osddt.spec',
@@ -87,11 +88,52 @@ describe('COMMAND_DEFINITIONS', () => {
     ]);
   });
 
+  describe('osddt.continue', () => {
+    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.continue')!;
+
+    it('should have a description', () => {
+      expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include REPO_PREAMBLE to resolve project context', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain(REPO_PREAMBLE);
+    });
+
+    it('should detect the implementing phase from osddt.tasks.md with unchecked tasks', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('osddt.tasks.md');
+      expect(body).toContain('- [ ]');
+      expect(body).toContain('/osddt.implement $ARGUMENTS');
+    });
+
+    it('should detect the ready-to-close phase when all tasks are checked', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('- [x]');
+      expect(body).toContain('/osddt.done $ARGUMENTS');
+    });
+
+    it('should detect spec-done phase from osddt.spec.md', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.plan $ARGUMENTS');
+    });
+
+    it('should detect research-done phase from osddt.research.md', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
+    });
+
+    it('should report the file found and the command to run next', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('exact command the user should run next');
+    });
+  });
+
   describe('osddt.research', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.research')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include REPO_PREAMBLE to establish project context', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain(REPO_PREAMBLE);
     });
 
     it('should include the $ARGUMENTS placeholder in its body', () => {
@@ -135,6 +177,10 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include REPO_PREAMBLE to establish project context', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain(REPO_PREAMBLE);
     });
 
     it('should include the $ARGUMENTS placeholder in its body', () => {

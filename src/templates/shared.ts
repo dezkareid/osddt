@@ -67,9 +67,32 @@ export interface CommandDefinition {
 
 export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
+    name: 'osddt.continue',
+    description: 'Detect the current workflow phase and prompt the next command to run',
+    body: (args) => `${REPO_PREAMBLE}## Instructions
+
+Check the working directory \`<project-path>/working-on/<feature-name>\` for the files listed below **in order** to determine the current phase. Use the first matching condition:
+
+| Condition | Current phase | Run next |
+| --------- | ------------- | -------- |
+| \`osddt.tasks.md\` exists **and** has at least one unchecked task (\`- [ ]\`) | Implementing | \`/osddt.implement ${args}\` |
+| \`osddt.tasks.md\` exists **and** all tasks are checked (\`- [x]\`) | Ready to close | \`/osddt.done ${args}\` |
+| \`osddt.plan.md\` exists | Planning done | \`/osddt.tasks ${args}\` |
+| \`osddt.spec.md\` exists | Spec done | \`/osddt.plan ${args}\` |
+| \`osddt.research.md\` exists | Research done | \`/osddt.spec ${args}\` |
+| None of the above | Not started | \`/osddt.spec ${args}\` (or \`/osddt.research ${args}\` if research is needed first) |
+
+Report which file was found, which phase that corresponds to, and the exact command the user should run next.
+
+## Arguments
+
+${args}
+`,
+  },
+  {
     name: 'osddt.research',
     description: 'Research a topic and write a research file to inform the feature specification',
-    body: (args) => `## Instructions
+    body: (args) => `${REPO_PREAMBLE}## Instructions
 
 The argument provided is: ${args}
 
@@ -84,24 +107,14 @@ ${FEATURE_NAME_RULES}
 
 Once the feature name is determined:
 
-3. Read the \`.osddtrc\` file in the root of the repository to determine the project path.
+3. ${WORKING_DIR_STEP}
 
-\`\`\`json
-// .osddtrc example
-{ "repoType": "monorepo" | "single" }
-\`\`\`
-
-- If \`repoType\` is \`"single"\`: the project path is the repository root.
-- If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
-
-4. ${WORKING_DIR_STEP}
-
-5. Research the topic thoroughly:
+4. Research the topic thoroughly:
    - Explore the existing codebase for relevant patterns, conventions, and prior art
    - Identify related files, modules, and dependencies
    - Note any constraints, risks, or open questions
 
-6. Write the findings to \`osddt.research.md\` in the working directory using the following format:
+5. Write the findings to \`osddt.research.md\` in the working directory using the following format:
 
 ## Research Format
 
@@ -129,7 +142,7 @@ Run the following command to write the feature specification:
   {
     name: 'osddt.start',
     description: 'Start a new feature by creating a branch and working-on folder',
-    body: (args) => `## Instructions
+    body: (args) => `${REPO_PREAMBLE}## Instructions
 
 The argument provided is: ${args}
 
@@ -153,21 +166,11 @@ Once the branch name is determined:
      - **Resume** — switch to the existing branch (\`git checkout <branch-name>\`) and continue
      - **Abort** — stop and do nothing
 
-4. Read the \`.osddtrc\` file in the root of the repository to determine the project path.
-
-\`\`\`json
-// .osddtrc example
-{ "repoType": "monorepo" | "single" }
-\`\`\`
-
-- If \`repoType\` is \`"single"\`: the project path is the repository root.
-- If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
-
-5. ${WORKING_DIR_STEP}
+4. ${WORKING_DIR_STEP}
 
 Where \`<feature-name>\` is the last segment of the branch name (after the last \`/\`, or the full branch name if no \`/\` is present).
 
-6. Report the branch name and working directory that were created or resumed.
+5. Report the branch name and working directory that were created or resumed.
 
 ## Arguments
 
@@ -185,7 +188,7 @@ Run the following command to write the feature specification:
   {
     name: 'osddt.spec',
     description: 'Analyze requirements and write a feature specification',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args) => `## Instructions
 
 1. Check whether \`osddt.research.md\` exists in the working directory.
    - If it exists, read it and use its findings (key insights, constraints, open questions, codebase findings) as additional context when writing the specification.
@@ -222,7 +225,7 @@ Run the following command to create the implementation plan:
   {
     name: 'osddt.plan',
     description: 'Create a technical implementation plan from a specification',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args) => `## Instructions
 
 1. Read \`osddt.spec.md\` from the working directory
 2. Break down the implementation into logical phases and steps
@@ -254,7 +257,7 @@ Run the following command to generate the task list:
   {
     name: 'osddt.tasks',
     description: 'Generate actionable tasks from an implementation plan',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args) => `## Instructions
 
 1. Read \`osddt.plan.md\` from the working directory
 2. Break each phase into discrete, executable tasks
@@ -285,7 +288,7 @@ Run the following command to start implementing tasks:
   {
     name: 'osddt.implement',
     description: 'Execute tasks from the task list one by one',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args) => `## Instructions
 
 1. Read \`osddt.tasks.md\` from the working directory
 2. Find the next unchecked task (\`- [ ]\`)
@@ -316,7 +319,7 @@ Once all tasks are checked off, run the following command to mark the feature as
   {
     name: 'osddt.done',
     description: 'Mark a feature as done and move it from working-on to done',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args) => `## Instructions
 
 1. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
 2. Run the following command to move the feature folder from \`working-on\` to \`done\`:
