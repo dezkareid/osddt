@@ -59,6 +59,8 @@ Different agents use different argument placeholders:
 
 The following versions are established across the project's packages and should be respected when adding new dependencies or troubleshooting.
 
+Always prefer use exact versions for dependencies. Do not use `^` or `~`.
+
 ### Core Languages & Runtimes
 - **TypeScript**: `5.9.3`
 
