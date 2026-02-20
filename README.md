@@ -38,3 +38,25 @@ Generated files are placed in:
 
 - `.claude/commands/osddt.<name>.md` (Claude Code)
 - `.gemini/commands/osddt.<name>.toml` (Gemini CLI)
+
+## Development
+
+### Running Tests
+
+```bash
+# Run the full test suite once
+pnpm test
+
+# Run in watch mode during development
+pnpm run test:watch
+```
+
+### Local Setup
+
+After making changes to the source, rebuild and regenerate the agent command files in the repository:
+
+```bash
+pnpm run setup-local
+```
+
+This runs `pnpm run build` followed by `npx osddt setup`, prompting you to select which agents to configure and the repo type.
