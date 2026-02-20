@@ -59,3 +59,5 @@ jobs:
           working-directory: "."
           tag-format: "osddt-v${version}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
