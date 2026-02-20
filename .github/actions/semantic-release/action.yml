@@ -35,3 +35,4 @@ runs:
         tag_format: ${{ inputs.tag-format }}
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        NPM_CONFIG_PROVENANCE: true
