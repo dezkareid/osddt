@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/dezkareid/osddt/compare/osddt-v1.0.0...osddt-v1.1.0) (2026-02-20)
+
+
+### Features
+
+* add agent selection to setup, fix package name in docs, and document project structure ([77e2b9f](https://github.com/dezkareid/osddt/commit/77e2b9f53f79cc7fb4d4b5a6efd55f1f0a2d8a68))
+
 # 1.0.0 (2026-02-20)
 
 
