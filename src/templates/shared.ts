@@ -3,7 +3,7 @@ export const REPO_PREAMBLE = `## Context
 Before proceeding, run the following command and parse the JSON output to get the current branch and date:
 
 \`\`\`
-npx osddt meta-info
+npx @dezkareid/osddt meta-info
 \`\`\`
 
 ## Repository Configuration
@@ -325,7 +325,7 @@ Once all tasks are checked off, run the following command to mark the feature as
 2. Run the following command to move the feature folder from \`working-on\` to \`done\`:
 
 \`\`\`
-npx osddt done ${args}
+npx @dezkareid/osddt done ${args}
 \`\`\`
 
    The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.

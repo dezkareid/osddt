@@ -5,13 +5,13 @@ Other spec driven development tool but for monorepo
 
 | Command                        | Description                                                   |
 | ------------------------------ | ------------------------------------------------------------- |
-| `osddt setup`                  | Generate agent command files for Claude and Gemini            |
-| `osddt meta-info`              | Output current branch and date as JSON                        |
-| `osddt done <feature-name>`    | Move `working-on/<feature>` to `done/<feature>`               |
+| `@dezkareid/osddt setup`                  | Generate agent command files for Claude and Gemini            |
+| `@dezkareid/osddt meta-info`              | Output current branch and date as JSON                        |
+| `@dezkareid/osddt done <feature-name>`    | Move `working-on/<feature>` to `done/<feature>`               |
 
 ## Command Templates
 
-Run `osddt setup` once to generate the agent command files.
+Run `npx @dezkareid/osddt setup` once to generate the agent command files.
 
 `osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. Use `osddt.continue` to resume an in-progress feature from a new session.
 

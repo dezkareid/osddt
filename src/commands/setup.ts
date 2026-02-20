@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
-import { askRepoType, type RepoType } from '../utils/prompt.js';
+import { askRepoType, askAgents, type RepoType } from '../utils/prompt.js';
 
 interface CommandFile {
   filePath: string;
@@ -27,22 +27,30 @@ async function writeConfig(cwd: string, config: OsddtConfig): Promise<void> {
 }
 
 async function runSetup(cwd: string): Promise<void> {
+  const agents = await askAgents();
+  console.log('');
+
   const repoType = await askRepoType();
   console.log('');
 
   console.log('Setting up OSDDT command files...\n');
 
-  const claudeFiles = getClaudeTemplates(cwd);
-  const geminiFiles = getGeminiTemplates(cwd);
-
-  console.log('Claude Code commands (.claude/commands/):');
-  for (const file of claudeFiles) {
-    await writeCommandFile(file);
+  if (agents.includes('claude')) {
+    const claudeFiles = getClaudeTemplates(cwd);
+    console.log('Claude Code commands (.claude/commands/):');
+    for (const file of claudeFiles) {
+      await writeCommandFile(file);
+    }
+    console.log('');
   }
 
-  console.log('\nGemini CLI commands (.gemini/commands/):');
-  for (const file of geminiFiles) {
-    await writeCommandFile(file);
+  if (agents.includes('gemini')) {
+    const geminiFiles = getGeminiTemplates(cwd);
+    console.log('Gemini CLI commands (.gemini/commands/):');
+    for (const file of geminiFiles) {
+      await writeCommandFile(file);
+    }
+    console.log('');
   }
 
   await writeConfig(cwd, { repoType });
