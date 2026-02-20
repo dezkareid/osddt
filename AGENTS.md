@@ -59,9 +59,11 @@ Different agents use different argument placeholders:
 
 ## Development
 
-### Commit Message Format
+### Commit Rules
 
 Always use Conventional Commits format for commit messages.
+
+Never commit directly to `main` or `master`. If the current branch is one of them, propose creating a new branch before committing.
 
 ### Critical Dependency Versions
 
