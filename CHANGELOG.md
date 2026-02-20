@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/dezkareid/osddt/compare/osddt-v1.2.0...osddt-v1.3.0) (2026-02-20)
+
+
+### Bug Fixes
+
+* **implement:** skip prompt and proceed directly when tasks file exists ([c4a4e6d](https://github.com/dezkareid/osddt/commit/c4a4e6dc9d28efdb885ddfb414643d59e68d3d7e))
+* **templates:** check output file existence before reading input files ([e3a0367](https://github.com/dezkareid/osddt/commit/e3a0367ca11be338b3f71dd196bc9bdc5d6e2c75))
+
+
+### Features
+
+* **setup:** add --agents and --repo-type flags for non-interactive mode ([2942f76](https://github.com/dezkareid/osddt/commit/2942f76c46061c53c1fd2da2b9ade898be1f5ffa))
+
 # [1.2.0](https://github.com/dezkareid/osddt/compare/osddt-v1.1.0...osddt-v1.2.0) (2026-02-20)
 
 
