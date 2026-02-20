@@ -3,7 +3,7 @@ import { REPO_PREAMBLE, FEATURE_NAME_RULES, WORKING_DIR_STEP, COMMAND_DEFINITION
 
 describe('REPO_PREAMBLE', () => {
   it('should instruct the agent to run npx osddt meta-info', () => {
-    expect(REPO_PREAMBLE).toContain('npx osddt meta-info');
+    expect(REPO_PREAMBLE).toContain('npx @dezkareid/osddt meta-info');
   });
 
   it('should describe the working-on folder structure', () => {
@@ -312,7 +312,7 @@ describe('COMMAND_DEFINITIONS', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.done')!;
 
     it('should instruct running npx osddt done with the feature name', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('npx osddt done $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS')).toContain('npx @dezkareid/osddt done $ARGUMENTS');
     });
 
     it('should instruct verifying all tasks are checked off', () => {
