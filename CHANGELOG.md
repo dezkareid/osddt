@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/dezkareid/osddt/compare/osddt-v1.1.0...osddt-v1.2.0) (2026-02-20)
+
+
+### Features
+
+* check for existing output file in plan, tasks, and implement steps ([b86db59](https://github.com/dezkareid/osddt/commit/b86db59508537b82584effd454c4010ffae18538))
+
 # [1.1.0](https://github.com/dezkareid/osddt/compare/osddt-v1.0.0...osddt-v1.1.0) (2026-02-20)
 
 
