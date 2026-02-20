@@ -304,10 +304,7 @@ Run the following command to start implementing tasks:
 
 1. Check whether \`osddt.tasks.md\` exists in the working directory:
    - If it **does not exist**, stop and ask the user to run \`/osddt.tasks ${args}\` first.
-   - If it **already exists**, ask the user whether to:
-     - **Continue** — find the next unchecked task and implement it (default)
-     - **Update tasks** — edit \`osddt.tasks.md\` before implementing (e.g. to add, remove, or reorder tasks)
-     - **Do nothing** — stop here without making any changes
+   - If it **already exists**, proceed directly to reading it.
 2. Read \`osddt.tasks.md\` from the working directory
 3. Find the next unchecked task (\`- [ ]\`)
 4. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`) in the working directory

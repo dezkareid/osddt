@@ -325,11 +325,9 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.tasks $ARGUMENTS');
     });
 
-    it('should offer Continue, Update tasks, and Do nothing when the file exists', () => {
+    it('should proceed directly to reading the file when it exists', () => {
       const body = cmd.body('$ARGUMENTS');
-      expect(body).toContain('Continue');
-      expect(body).toContain('Update tasks');
-      expect(body).toContain('Do nothing');
+      expect(body).toContain('proceed directly to reading it');
     });
 
     it('should instruct implementing one task at a time', () => {
