@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/dezkareid/osddt/compare/osddt-v1.0.0...osddt-v1.1.0) (2026-02-20)
+
+
+### Features
+
+* add package metadata and publishing configuration to package.json ([a6b71c2](https://github.com/dezkareid/osddt/commit/a6b71c27f68cdb592ddba4b8e5e7f80266b8119e))
+
 # 1.0.0 (2026-02-20)
 
 
