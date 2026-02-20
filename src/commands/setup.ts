@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
-import { askRepoType, askAgents, type RepoType } from '../utils/prompt.js';
+import { askRepoType, askAgents, type RepoType, type AgentType } from '../utils/prompt.js';
 
 interface CommandFile {
   filePath: string;
@@ -12,6 +12,37 @@ interface CommandFile {
 
 interface OsddtConfig {
   repoType: RepoType;
+}
+
+interface SetupOptions {
+  dir: string;
+  agents?: string;
+  repoType?: string;
+}
+
+const VALID_AGENTS: AgentType[] = ['claude', 'gemini'];
+const VALID_REPO_TYPES: RepoType[] = ['single', 'monorepo'];
+
+function parseAgents(raw: string): AgentType[] {
+  const values = raw.split(',').map((s) => s.trim());
+  if (values.length === 0) {
+    console.error('Error: --agents requires at least one value.');
+    process.exit(1);
+  }
+  const invalid = values.filter((v) => !VALID_AGENTS.includes(v as AgentType));
+  if (invalid.length > 0) {
+    console.error(`Error: Invalid agent(s): ${invalid.join(', ')}. Valid values: ${VALID_AGENTS.join(', ')}.`);
+    process.exit(1);
+  }
+  return values as AgentType[];
+}
+
+function parseRepoType(raw: string): RepoType {
+  if (!VALID_REPO_TYPES.includes(raw as RepoType)) {
+    console.error(`Error: Invalid repo type: "${raw}". Valid values: ${VALID_REPO_TYPES.join(', ')}.`);
+    process.exit(1);
+  }
+  return raw as RepoType;
 }
 
 async function writeCommandFile(file: CommandFile): Promise<void> {
@@ -26,12 +57,14 @@ async function writeConfig(cwd: string, config: OsddtConfig): Promise<void> {
   console.log(`\nSaved config: ${configPath}`);
 }
 
-async function runSetup(cwd: string): Promise<void> {
-  const agents = await askAgents();
-  console.log('');
+async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): Promise<void> {
+  const agents: AgentType[] =
+    rawAgents !== undefined ? parseAgents(rawAgents) : await askAgents();
+  if (rawAgents === undefined) console.log('');
 
-  const repoType = await askRepoType();
-  console.log('');
+  const repoType: RepoType =
+    rawRepoType !== undefined ? parseRepoType(rawRepoType) : await askRepoType();
+  if (rawRepoType === undefined) console.log('');
 
   console.log('Setting up OSDDT command files...\n');
 
@@ -65,9 +98,11 @@ export function setupCommand(): Command {
   cmd
     .description('Create OSDDT command files for Claude and Gemini CLI agents')
     .option('-d, --dir <directory>', 'target directory', process.cwd())
-    .action(async (options: { dir: string }) => {
+    .option('--agents <list>', 'comma-separated agents to set up (claude, gemini)')
+    .option('--repo-type <type>', 'repository type (single, monorepo)')
+    .action(async (options: SetupOptions) => {
       const targetDir = path.resolve(options.dir);
-      await runSetup(targetDir);
+      await runSetup(targetDir, options.agents, options.repoType);
     });
 
   return cmd;

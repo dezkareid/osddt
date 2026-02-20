@@ -103,7 +103,7 @@ osddt/
 ├── src/
 │   ├── index.ts                   # CLI entry point — wires Commander program and registers all commands
 │   ├── commands/
-│   │   ├── setup.ts               # `osddt setup` — prompts for agents & repo type, writes command files and .osddtrc
+│   │   ├── setup.ts               # `osddt setup` — prompts for agents & repo type (or reads --agents/--repo-type flags), writes command files and .osddtrc
 │   │   ├── meta-info.ts           # `osddt meta-info` — outputs { branch, date } as JSON (consumed by generated templates)
 │   │   └── done.ts                # `osddt done <feature>` — moves working-on/<feature> → done/YYYY-MM-DD-<feature>
 │   ├── templates/
@@ -125,7 +125,7 @@ osddt/
 #### Key relationships
 
 - **`shared.ts` is the single source of truth** for all command template content. Both `claude.ts` and `gemini.ts` import `COMMAND_DEFINITIONS` from it and only differ in file format (Markdown vs TOML) and argument placeholder (`$ARGUMENTS` vs `{{args}}`).
-- **`setup.ts`** orchestrates the interactive setup: calls `askAgents()` → `askRepoType()` → writes selected agent files → writes `.osddtrc`.
+- **`setup.ts`** orchestrates setup: reads `--agents`/`--repo-type` flags when provided (non-interactive), otherwise calls `askAgents()` → `askRepoType()` → writes selected agent files → writes `.osddtrc`.
 - **`meta-info.ts`** is referenced inside the generated templates so agents can fetch live branch/date at invocation time (not baked in at build time).
 - **Test files** (`.spec.ts`) live next to the source file they cover. Template tests are pure (no mocks); command tests mock `fs-extra` and `child_process`.
 
@@ -133,11 +133,22 @@ osddt/
 
 All commands available via `npx @dezkareid/osddt <command>`:
 
-| Command                        | Description                                                   |
-| ------------------------------ | ------------------------------------------------------------- |
-| `@dezkareid/osddt setup`                  | Generate agent command files for Claude and Gemini            |
-| `@dezkareid/osddt meta-info`              | Output current branch and date as JSON                        |
-| `@dezkareid/osddt done <feature-name>`    | Move `working-on/<feature>` to `done/<feature>`               |
+| Command                                                              | Description                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `@dezkareid/osddt setup`                                             | Generate agent command files for Claude and Gemini            |
+| `@dezkareid/osddt setup --agents <list> --repo-type <type>`          | Non-interactive setup (for CI/scripted environments)          |
+| `@dezkareid/osddt meta-info`                                         | Output current branch and date as JSON                        |
+| `@dezkareid/osddt done <feature-name>`                               | Move `working-on/<feature>` to `done/<feature>`               |
+
+#### `osddt setup` options
+
+| Flag | Values | Description |
+| ---- | ------ | ----------- |
+| `--agents <list>` | `claude`, `gemini` (comma-separated) | Skip the agents prompt and use the provided value(s) |
+| `--repo-type <type>` | `single`, `monorepo` | Skip the repo type prompt and use the provided value |
+| `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
+
+Both flags are optional. Providing neither runs the fully interactive mode. Providing both skips all prompts.
 
 ### Command Templates
 
