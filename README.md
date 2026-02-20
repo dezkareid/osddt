@@ -3,11 +3,30 @@ Other spec driven development tool but for monorepo
 
 ## CLI Commands
 
-| Command                        | Description                                                   |
-| ------------------------------ | ------------------------------------------------------------- |
-| `@dezkareid/osddt setup`                  | Generate agent command files for Claude and Gemini            |
-| `@dezkareid/osddt meta-info`              | Output current branch and date as JSON                        |
-| `@dezkareid/osddt done <feature-name>`    | Move `working-on/<feature>` to `done/<feature>`               |
+| Command                                                              | Description                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `@dezkareid/osddt setup`                                             | Generate agent command files for Claude and Gemini            |
+| `@dezkareid/osddt setup --agents <list> --repo-type <type>`          | Non-interactive setup (for CI/scripted environments)          |
+| `@dezkareid/osddt meta-info`                                         | Output current branch and date as JSON                        |
+| `@dezkareid/osddt done <feature-name>`                               | Move `working-on/<feature>` to `done/<feature>`               |
+
+### `osddt setup` options
+
+| Flag | Values | Description |
+| ---- | ------ | ----------- |
+| `--agents <list>` | `claude`, `gemini` (comma-separated) | Skip the agents prompt and use the provided value(s) |
+| `--repo-type <type>` | `single`, `monorepo` | Skip the repo type prompt and use the provided value |
+| `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
+
+Both flags are optional. Providing neither runs the fully interactive mode. Providing both skips all prompts.
+
+```bash
+# Interactive (default)
+npx @dezkareid/osddt setup
+
+# Non-interactive (CI-friendly)
+npx @dezkareid/osddt setup --agents claude,gemini --repo-type single
+```
 
 ## Command Templates
 
