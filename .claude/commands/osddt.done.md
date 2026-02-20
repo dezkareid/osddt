@@ -1,0 +1,21 @@
+---
+description: "Mark a feature as done and move it from working-on to done"
+---
+
+## Instructions
+
+1. Confirm all tasks in `osddt.tasks.md` are checked off (`- [x]`)
+2. Run the following command to move the feature folder from `working-on` to `done`:
+
+```
+npx @dezkareid/osddt done $ARGUMENTS
+```
+
+   The command will automatically prefix the destination folder name with today's date in `YYYY-MM-DD` format.
+   For example, `working-on/feature-a` will be moved to `done/YYYY-MM-DD-feature-a`.
+
+3. Report the result of the command, including the full destination path
+
+## Arguments
+
+$ARGUMENTS
