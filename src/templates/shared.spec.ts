@@ -271,6 +271,17 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.plan.md');
     });
 
+    it('should check whether osddt.plan.md already exists', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('already exists');
+    });
+
+    it('should offer Regenerate, Update, and Do nothing when the file exists', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('Regenerate');
+      expect(body).toContain('Update');
+      expect(body).toContain('Do nothing');
+    });
+
     it('should prompt the user to run osddt.tasks as the next step', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.tasks $ARGUMENTS');
     });
@@ -287,6 +298,17 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
     });
 
+    it('should check whether osddt.tasks.md already exists', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('already exists');
+    });
+
+    it('should offer Regenerate, Update, and Do nothing when the file exists', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('Regenerate');
+      expect(body).toContain('Update');
+      expect(body).toContain('Do nothing');
+    });
+
     it('should prompt the user to run osddt.implement as the next step', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('/osddt.implement $ARGUMENTS');
     });
@@ -297,6 +319,17 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should instruct reading osddt.tasks.md', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
+    });
+
+    it('should instruct stopping when osddt.tasks.md does not exist', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.tasks $ARGUMENTS');
+    });
+
+    it('should offer Continue, Update tasks, and Do nothing when the file exists', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('Continue');
+      expect(body).toContain('Update tasks');
+      expect(body).toContain('Do nothing');
     });
 
     it('should instruct implementing one task at a time', () => {
