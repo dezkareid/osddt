@@ -96,7 +96,7 @@ Always prefer use exact versions for dependencies. Do not use `^` or `~`.
 ### Project Structure & Conventions
 - **Package Manager**: `pnpm` is the required package manager.
 
-### Source Layout
+### Codebase Structure
 
 ```
 osddt/
