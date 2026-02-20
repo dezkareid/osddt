@@ -6,6 +6,24 @@
     "spec-driven",
     "cli"
   ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dezkareid/osddt.git"
+  },
+  "author": "Joel Humberto Gomez Paredes <elmaildeldezkareid@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dezkareid/osddt/issues"
+  },
+  "homepage": "https://github.com/dezkareid/osddt#readme",
   "type": "module",
   "bin": {
     "osddt": "./dist/index.js"
