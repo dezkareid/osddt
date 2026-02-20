@@ -228,9 +228,15 @@ Run the following command to create the implementation plan:
     body: (args) => `## Instructions
 
 1. Read \`osddt.spec.md\` from the working directory
-2. Break down the implementation into logical phases and steps
-3. Identify technical decisions, dependencies, and risks
-4. Write the plan to \`osddt.plan.md\` in the working directory
+2. Check whether \`osddt.plan.md\` already exists in the working directory:
+   - If it **does not exist**, proceed to generate it.
+   - If it **already exists**, ask the user whether to:
+     - **Regenerate** — discard the existing file and create a fresh plan from scratch
+     - **Update** — read the existing file and apply targeted changes based on ${args}
+     - **Do nothing** — stop here and leave the file as-is
+3. Break down the implementation into logical phases and steps
+4. Identify technical decisions, dependencies, and risks
+5. Write the plan to \`osddt.plan.md\` in the working directory
 
 ## Plan Format
 
@@ -260,9 +266,15 @@ Run the following command to generate the task list:
     body: (args) => `## Instructions
 
 1. Read \`osddt.plan.md\` from the working directory
-2. Break each phase into discrete, executable tasks
-3. Estimate complexity (S/M/L) for each task
-4. Write the task list to \`osddt.tasks.md\` in the working directory
+2. Check whether \`osddt.tasks.md\` already exists in the working directory:
+   - If it **does not exist**, proceed to generate it.
+   - If it **already exists**, ask the user whether to:
+     - **Regenerate** — discard the existing file and create a fresh task list from scratch
+     - **Update** — read the existing file and apply targeted changes based on ${args}
+     - **Do nothing** — stop here and leave the file as-is
+3. Break each phase into discrete, executable tasks
+4. Estimate complexity (S/M/L) for each task
+5. Write the task list to \`osddt.tasks.md\` in the working directory
 
 ## Tasks Format
 
@@ -290,11 +302,17 @@ Run the following command to start implementing tasks:
     description: 'Execute tasks from the task list one by one',
     body: (args) => `## Instructions
 
-1. Read \`osddt.tasks.md\` from the working directory
-2. Find the next unchecked task (\`- [ ]\`)
-3. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`) in the working directory
-4. Mark the task as complete (\`- [x]\`) in \`osddt.tasks.md\`
-5. Report what was done and any issues encountered
+1. Check whether \`osddt.tasks.md\` exists in the working directory:
+   - If it **does not exist**, stop and ask the user to run \`/osddt.tasks ${args}\` first.
+   - If it **already exists**, ask the user whether to:
+     - **Continue** — find the next unchecked task and implement it (default)
+     - **Update tasks** — edit \`osddt.tasks.md\` before implementing (e.g. to add, remove, or reorder tasks)
+     - **Do nothing** — stop here without making any changes
+2. Read \`osddt.tasks.md\` from the working directory
+3. Find the next unchecked task (\`- [ ]\`)
+4. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`) in the working directory
+5. Mark the task as complete (\`- [x]\`) in \`osddt.tasks.md\`
+6. Report what was done and any issues encountered
 
 ## Guidelines
 
