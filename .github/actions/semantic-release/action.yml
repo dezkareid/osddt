@@ -29,6 +29,7 @@ runs:
             {name: 'alpha', prerelease: true}
           ]
         extra_plugins: |
+          @anolilab/semantic-release-pnpm@5.0.0
           @semantic-release/changelog@6.0.3
           @semantic-release/git@10.0.1
         working_directory: ${{ inputs.working-directory }}

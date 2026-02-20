@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-js
       - name: Test library
-        run: npm test
+        run: pnpm test
 
   release:
     needs: test
@@ -48,7 +48,7 @@ jobs:
       - name: Setup Node.js and install dependencies
         uses: ./.github/actions/setup-js
       - name: Build
-        run: npm run build
+        run: pnpm run build
         env:
           NODE_ENV: production
       - name: Create .releaserc from template
@@ -59,5 +59,3 @@ jobs:
           working-directory: "."
           tag-format: "osddt-v${version}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          NODE_AUTH_TOKEN: ${{ github.token }}
