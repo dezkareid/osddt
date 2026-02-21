@@ -338,12 +338,26 @@ describe('COMMAND_DEFINITIONS', () => {
   describe('osddt.done', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.done')!;
 
-    it('should instruct running npx osddt done with the feature name', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('npx @dezkareid/osddt done $ARGUMENTS');
+    it('should instruct reading .osddtrc to resolve the project path', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('.osddtrc');
+    });
+
+    it('should instruct resolving the project path for single and monorepo types', () => {
+      const body = cmd.body('$ARGUMENTS');
+      expect(body).toContain('"single"');
+      expect(body).toContain('"monorepo"');
     });
 
     it('should instruct verifying all tasks are checked off', () => {
       expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
+    });
+
+    it('should instruct running npx osddt done with the derived feature name and --dir', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('npx @dezkareid/osddt done <feature-name> --dir <project-path>');
+    });
+
+    it('should instruct deriving the feature name from args to match the working-on folder', () => {
+      expect(cmd.body('$ARGUMENTS')).toContain('working-on/');
     });
 
     it('should inform the agent that the destination folder is prefixed with the date', () => {
