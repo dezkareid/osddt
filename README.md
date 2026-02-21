@@ -8,7 +8,7 @@ Other spec driven development tool but for monorepo
 | `@dezkareid/osddt setup`                                             | Generate agent command files for Claude and Gemini            |
 | `@dezkareid/osddt setup --agents <list> --repo-type <type>`          | Non-interactive setup (for CI/scripted environments)          |
 | `@dezkareid/osddt meta-info`                                         | Output current branch and date as JSON                        |
-| `@dezkareid/osddt done <feature-name>`                               | Move `working-on/<feature>` to `done/<feature>`               |
+| `@dezkareid/osddt done <feature-name> --dir <project-path>`          | Move `working-on/<feature>` to `done/<feature>`               |
 
 ### `osddt setup` options
 
@@ -51,7 +51,7 @@ osddt.start    ──┘
 | `osddt.plan`       | Create a technical implementation plan from a specification        |
 | `osddt.tasks`      | Generate actionable tasks from an implementation plan              |
 | `osddt.implement`  | Execute tasks from the task list one by one                        |
-| `osddt.done`       | Mark a feature as done and move it from working-on to done         |
+| `osddt.done`       | Resolve project path, verify tasks, and move the feature to done   |
 
 Generated files are placed in:
 

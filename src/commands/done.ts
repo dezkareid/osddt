@@ -11,19 +11,9 @@ function todayPrefix(): string {
 }
 
 async function runDone(featureName: string, cwd: string): Promise<void> {
-  const configPath = path.join(cwd, '.osddtrc');
-
-  if (!(await fs.pathExists(configPath))) {
-    console.error('Error: .osddtrc not found. Run `osddt setup` first.');
-    process.exit(1);
-  }
-
-  await fs.readJson(configPath);
-  const projectPath = cwd;
-
-  const src = path.join(projectPath, 'working-on', featureName);
+  const src = path.join(cwd, 'working-on', featureName);
   const destName = `${todayPrefix()}-${featureName}`;
-  const dest = path.join(projectPath, 'done', destName);
+  const dest = path.join(cwd, 'done', destName);
 
   if (!(await fs.pathExists(src))) {
     console.error(`Error: working-on/${featureName} does not exist.`);
