@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/dezkareid/osddt/compare/osddt-v1.3.2...osddt-v1.4.0) (2026-02-24)
+
+
+### Features
+
+* **templates:** add osddt.clarify command ([d970813](https://github.com/dezkareid/osddt/commit/d9708137ecdb4bb1433442ca52be8dca0813cab5))
+
 ## [1.3.2](https://github.com/dezkareid/osddt/compare/osddt-v1.3.1...osddt-v1.3.2) (2026-02-24)
 
 
