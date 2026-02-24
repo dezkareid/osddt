@@ -111,13 +111,13 @@ describe('COMMAND_DEFINITIONS', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
       expect(body).toContain('osddt.tasks.md');
       expect(body).toContain('- [ ]');
-      expect(body).toContain('/osddt.implement $ARGUMENTS');
+      expect(body).toContain('/osddt.implement');
     });
 
     it('should detect the ready-to-close phase when all tasks are checked', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
       expect(body).toContain('- [x]');
-      expect(body).toContain('/osddt.done $ARGUMENTS');
+      expect(body).toContain('/osddt.done');
     });
 
     it('should detect spec-done phase from osddt.spec.md', () => {
@@ -348,7 +348,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.tasks as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.tasks $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.tasks');
     });
   });
 

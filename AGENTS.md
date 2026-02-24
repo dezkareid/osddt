@@ -212,7 +212,8 @@ osddt.start    ──┘
 - **Actions performed by the agent**:
   1. Runs `npx @dezkareid/osddt meta-info` and reads `.osddtrc` to resolve the project path.
   2. Checks the `working-on/<feature-name>/` folder for the following phase files **in order**: `osddt.tasks.md` (with unchecked tasks), `osddt.tasks.md` (all checked), `osddt.plan.md`, `osddt.spec.md`, `osddt.research.md`.
-  3. Reports the file found, the current phase, and the **exact command** the user should run next.
+  3. Reports the file found, the current phase, and the **exact command** the user should run next. Commands that require no further arguments (`/osddt.implement`, `/osddt.done`, `/osddt.tasks`) are suggested without arguments; commands that still need feature context (`/osddt.plan`, `/osddt.spec`, `/osddt.research`, `/osddt.clarify`) are suggested with the feature name.
+  4. If the detected phase is **Spec done** or **Planning done** and the spec has unanswered open questions, additionally recommends running `/osddt.clarify`.
 
 #### osddt.start behaviour
 
@@ -243,10 +244,10 @@ osddt.start    ──┘
 
 #### osddt.done behaviour
 
-- **Input**: A feature name or branch name identifying the feature to close.
+- **Input**: None — the feature is identified automatically.
 - **Actions performed by the agent**:
   1. Reads `.osddtrc` to resolve the project path (single vs monorepo). For monorepos, asks the user which package.
-  2. Derives the feature name from the input (same rules as other commands — last segment of a branch name or kebab-cased slug, subject to the 30-character limit). Must match the folder under `working-on/`.
+  2. Lists all folders under `working-on/`. If there is only one, uses it automatically; if there are multiple, asks the user to pick one.
   3. Confirms all tasks in `osddt.tasks.md` are checked off (`- [x]`).
   4. Runs `npx @dezkareid/osddt done <feature-name> --dir <project-path>` to move the folder.
 
