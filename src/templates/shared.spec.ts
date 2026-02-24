@@ -121,11 +121,11 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should detect spec-done phase from osddt.spec.md', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan');
     });
 
     it('should detect research-done phase from osddt.research.md', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.spec $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.spec');
     });
 
     it('should report the file found and the command to run next', () => {
@@ -134,7 +134,7 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should recommend osddt.clarify when spec or plan phase has unanswered open questions', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
-      expect(body).toContain('/osddt.clarify $ARGUMENTS');
+      expect(body).toContain('/osddt.clarify');
       expect(body).toContain('unanswered open questions');
     });
   });
@@ -183,7 +183,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.spec $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.spec');
     });
   });
 
@@ -236,7 +236,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.spec $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.spec');
     });
   });
 
@@ -272,7 +272,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.plan as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan');
     });
   });
 
@@ -295,7 +295,7 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should instruct locating osddt.spec.md and stopping when absent', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
       expect(body).toContain('osddt.spec.md');
-      expect(body).toContain('/osddt.spec $ARGUMENTS');
+      expect(body).toContain('/osddt.spec');
     });
 
     it('should instruct reading the Open Questions section', () => {
@@ -313,7 +313,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.plan as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan');
     });
   });
 
@@ -342,7 +342,7 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should check for unanswered open questions and offer Clarify first or Proceed anyway', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
       expect(body).toContain('unanswered open question');
-      expect(body).toContain('/osddt.clarify $ARGUMENTS');
+      expect(body).toContain('/osddt.clarify');
       expect(body).toContain('Clarify first');
       expect(body).toContain('Proceed anyway');
     });

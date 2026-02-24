@@ -78,16 +78,16 @@ Check the working directory \`<project-path>/working-on/<feature-name>\` for the
 
 | Condition | Current phase | Run next |
 | --------- | ------------- | -------- |
-| \`osddt.tasks.md\` exists **and** has at least one unchecked task (\`- [ ]\`) | Implementing | \`/osddt.implement ${args}\` |
-| \`osddt.tasks.md\` exists **and** all tasks are checked (\`- [x]\`) | Ready to close | \`/osddt.done ${args}\` |
-| \`osddt.plan.md\` exists | Planning done | \`/osddt.tasks ${args}\` |
-| \`osddt.spec.md\` exists | Spec done | \`/osddt.plan ${args}\` |
-| \`osddt.research.md\` exists | Research done | \`/osddt.spec ${args}\` |
-| None of the above | Not started | \`/osddt.spec ${args}\` (or \`/osddt.research ${args}\` if research is needed first) |
+| \`osddt.tasks.md\` exists **and** has at least one unchecked task (\`- [ ]\`) | Implementing | \`/osddt.implement\` |
+| \`osddt.tasks.md\` exists **and** all tasks are checked (\`- [x]\`) | Ready to close | \`/osddt.done\` |
+| \`osddt.plan.md\` exists | Planning done | \`/osddt.tasks\` |
+| \`osddt.spec.md\` exists | Spec done | \`/osddt.plan <tech stack and key technical decisions>\` |
+| \`osddt.research.md\` exists | Research done | \`/osddt.spec <brief feature description>\` |
+| None of the above | Not started | \`/osddt.spec <brief feature description>\` (or \`/osddt.research <topic>\` if research is needed first) |
 
 Report which file was found, which phase that corresponds to, and the exact command the user should run next.
 
-> **Open Questions check**: After reporting the phase, if the detected phase is **Spec done** or **Planning done**, also check whether \`osddt.spec.md\` contains any unanswered open questions (items in the **Open Questions** section with no corresponding entry in the **Decisions** section). If unanswered questions exist, inform the user and recommend running \`/osddt.clarify ${args}\` before (or in addition to) the suggested next command.
+> **Open Questions check**: After reporting the phase, if the detected phase is **Spec done** or **Planning done**, also check whether \`osddt.spec.md\` contains any unanswered open questions (items in the **Open Questions** section with no corresponding entry in the **Decisions** section). If unanswered questions exist, inform the user and recommend running \`/osddt.clarify <feature-name>\` before (or in addition to) the suggested next command.
 
 ## Arguments
 
@@ -140,7 +140,7 @@ ${args}
 Run the following command to write the feature specification:
 
 \`\`\`
-/osddt.spec ${args}
+/osddt.spec <brief description of the feature or topic researched>
 \`\`\`
 `,
   },
@@ -186,7 +186,7 @@ ${args}
 Run the following command to write the feature specification:
 
 \`\`\`
-/osddt.spec ${args}
+/osddt.spec <brief description of the feature being built>
 \`\`\`
 `,
   },
@@ -225,7 +225,7 @@ ${args}
 Run the following command to create the implementation plan:
 
 \`\`\`
-/osddt.plan ${args}
+/osddt.plan <tech stack and key technical decisions, e.g. "use Node.js with SQLite, REST API, no auth">
 \`\`\`
 `,
   },
@@ -248,7 +248,7 @@ ${FEATURE_NAME_RULES}
 Once the feature name is determined:
 
 3. Check whether \`osddt.spec.md\` exists in \`working-on/<feature-name>/\`:
-   - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec ${args}\` first. Stop here.
+   - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec <brief feature description>\` first. Stop here.
 
 4. Read \`osddt.spec.md\` and extract all items listed under the **Open Questions** section.
    - If the **Open Questions** section is absent or empty, inform the user that there are no open questions to resolve. Skip to step 8.
@@ -269,7 +269,7 @@ Once the feature name is determined:
 8. Inform the user that all questions are now resolved (or were already resolved). Then prompt them to run (or re-run) the plan step so it reflects the updated decisions:
 
 \`\`\`
-/osddt.plan ${args}
+/osddt.plan <tech stack and key technical decisions, e.g. "use Node.js with SQLite, REST API, no auth">
 \`\`\`
 
 > Note: if \`osddt.plan.md\` already exists, the plan should be regenerated to incorporate the decisions.
@@ -295,7 +295,7 @@ ${args}
    - Count the items in the **Open Questions** section that have no corresponding entry in the **Decisions** section.
    - If there are any unanswered questions, inform the user: "This spec has X unanswered open question(s)."
    - Ask the user whether to:
-     - **Clarify first** — stop here and suggest running \`/osddt.clarify ${args}\` instead
+     - **Clarify first** — stop here and suggest running \`/osddt.clarify <feature-name>\` instead
      - **Proceed anyway** — continue with plan generation using the spec as-is
    - If there are no unanswered questions, proceed silently.
 4. Break down the implementation into logical phases and steps
@@ -320,7 +320,7 @@ ${args}
 Run the following command to generate the task list:
 
 \`\`\`
-/osddt.tasks ${args}
+/osddt.tasks
 \`\`\`
 `,
   },
