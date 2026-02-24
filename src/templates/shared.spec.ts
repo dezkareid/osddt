@@ -288,10 +288,6 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS', 'npx @dezkareid/osddt')).toContain(getRepoPreamble('npx @dezkareid/osddt'));
     });
 
-    it('should include the $ARGUMENTS placeholder in its body', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('$ARGUMENTS');
-    });
-
     it('should instruct locating osddt.spec.md and stopping when absent', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
       expect(body).toContain('osddt.spec.md');

@@ -232,51 +232,34 @@ Run the following command to create the implementation plan:
   {
     name: 'osddt.clarify',
     description: 'Resolve open questions in the spec and record decisions',
-    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
+    body: (_args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
 
-The argument provided is: ${args}
-
-Determine the feature name using the following logic:
-
-1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), derive the feature name from the last segment (after the last \`/\`, or the full value if no \`/\` is present).
-2. Otherwise treat ${args} as a human-readable feature description and convert it to a feature name.
-
-Apply the constraints below before using the name:
-
-${FEATURE_NAME_RULES}
-
-Once the feature name is determined:
-
-3. Check whether \`osddt.spec.md\` exists in \`working-on/<feature-name>/\`:
+1. Check whether \`osddt.spec.md\` exists in the working directory:
    - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec <brief feature description>\` first. Stop here.
 
-4. Read \`osddt.spec.md\` and extract all items listed under the **Open Questions** section.
-   - If the **Open Questions** section is absent or empty, inform the user that there are no open questions to resolve. Skip to step 8.
+2. Read \`osddt.spec.md\` and extract all items listed under the **Open Questions** section.
+   - If the **Open Questions** section is absent or empty, inform the user that there are no open questions to resolve. Skip to step 6.
 
-5. Read the **Decisions** section of \`osddt.spec.md\` (if it exists) to determine which questions have already been answered.
+3. Read the **Decisions** section of \`osddt.spec.md\` (if it exists) to determine which questions have already been answered.
    - A question is considered answered if there is a corresponding numbered entry in the **Decisions** section.
    - List the already-answered questions to the user and inform them they will be skipped.
 
-6. For each **unanswered** question (in order), present it to the user and collect a response.
-   - If all questions were already answered, inform the user and skip to step 8.
+4. For each **unanswered** question (in order), present it to the user and collect a response.
+   - If all questions were already answered, inform the user and skip to step 6.
 
-7. Update the **Decisions** section in \`osddt.spec.md\`:
+5. Update the **Decisions** section in \`osddt.spec.md\`:
    - If a **Decisions** section already exists, append new entries to it (do not modify existing entries).
    - If no **Decisions** section exists, add one at the end of the file.
    - Each decision entry uses the format: \`N. **<short question summary>**: <answer>\`
    - The **Open Questions** section is left unchanged.
 
-8. Inform the user that all questions are now resolved (or were already resolved). Then prompt them to run (or re-run) the plan step so it reflects the updated decisions:
+6. Inform the user that all questions are now resolved (or were already resolved). Then prompt them to run (or re-run) the plan step so it reflects the updated decisions:
 
 \`\`\`
 /osddt.plan <tech stack and key technical decisions, e.g. "use Node.js with SQLite, REST API, no auth">
 \`\`\`
 
 > Note: if \`osddt.plan.md\` already exists, the plan should be regenerated to incorporate the decisions.
-
-## Arguments
-
-${args}
 `,
   },
   {
