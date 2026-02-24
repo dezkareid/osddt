@@ -7,7 +7,7 @@ description: "Start a new feature by creating a branch and working-on folder"
 Before proceeding, run the following command and parse the JSON output to get the current branch and date:
 
 ```
-npx @dezkareid/osddt meta-info
+npx osddt meta-info
 ```
 
 ## Repository Configuration

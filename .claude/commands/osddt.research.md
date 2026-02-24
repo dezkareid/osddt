@@ -7,7 +7,7 @@ description: "Research a topic and write a research file to inform the feature s
 Before proceeding, run the following command and parse the JSON output to get the current branch and date:
 
 ```
-npx @dezkareid/osddt meta-info
+npx osddt meta-info
 ```
 
 ## Repository Configuration

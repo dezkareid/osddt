@@ -6,10 +6,6 @@ description: "Execute tasks from the task list one by one"
 
 1. Check whether `osddt.tasks.md` exists in the working directory:
    - If it **does not exist**, stop and ask the user to run `/osddt.tasks $ARGUMENTS` first.
-   - If it **already exists**, ask the user whether to:
-     - **Continue** — find the next unchecked task and implement it (default)
-     - **Update tasks** — edit `osddt.tasks.md` before implementing (e.g. to add, remove, or reorder tasks)
-     - **Do nothing** — stop here without making any changes
 2. Read `osddt.tasks.md` from the working directory
 3. Find the next unchecked task (`- [ ]`)
 4. Implement that task following the spec (`osddt.spec.md`) and plan (`osddt.plan.md`) in the working directory
