@@ -29,8 +29,9 @@ describe('getClaudeTemplates', () => {
   });
 
   it('should use $ARGUMENTS as the argument placeholder', () => {
+    const noArgs = ['osddt.tasks.md', 'osddt.implement.md', 'osddt.done.md'];
     for (const t of templates) {
-      if (t.filePath.endsWith('osddt.done.md')) continue;
+      if (noArgs.some((name) => t.filePath.endsWith(name))) continue;
       expect(t.content).toContain('$ARGUMENTS');
     }
   });

@@ -35,8 +35,9 @@ describe('getGeminiTemplates', () => {
   });
 
   it('should use {{args}} as the argument placeholder', () => {
+    const noArgs = ['osddt.tasks.toml', 'osddt.implement.toml', 'osddt.done.toml'];
     for (const t of templates) {
-      if (t.filePath.endsWith('osddt.done.toml')) continue;
+      if (noArgs.some((name) => t.filePath.endsWith(name))) continue;
       expect(t.content).toContain('{{args}}');
     }
   });

@@ -327,7 +327,7 @@ Run the following command to generate the task list:
   {
     name: 'osddt.tasks',
     description: 'Generate actionable tasks from an implementation plan',
-    body: (args) => `## Instructions
+    body: () => `## Instructions
 
 1. Check whether \`osddt.tasks.md\` already exists in the working directory:
    - If it **does not exist**, proceed to generate it.
@@ -352,14 +352,14 @@ The task list should include:
 Run the following command to start implementing tasks:
 
 \`\`\`
-/osddt.implement ${args}
+/osddt.implement
 \`\`\`
 `,
   },
   {
     name: 'osddt.implement',
     description: 'Execute tasks from the task list one by one',
-    body: (args) => `## Instructions
+    body: () => `## Instructions
 
 1. Check whether \`osddt.tasks.md\` exists in the working directory:
    - If it **does not exist**, stop and ask the user to run \`/osddt.tasks\` first.
@@ -381,7 +381,7 @@ Run the following command to start implementing tasks:
 Once all tasks are checked off, run the following command to mark the feature as done:
 
 \`\`\`
-/osddt.done ${args}
+/osddt.done
 \`\`\`
 `,
   },

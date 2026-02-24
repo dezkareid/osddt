@@ -375,7 +375,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.implement as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.implement $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.implement');
     });
   });
 
@@ -396,7 +396,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should prompt the user to run osddt.done as the next step', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.done $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.done');
     });
   });
 
