@@ -22,7 +22,7 @@ Before proceeding, read the \`.osddtrc\` file in the root of the repository to d
 
 ## Working Directory
 
-All generated files live under \`<project-path>/working-on/<feature-name>/\`. The \`<feature-name>\` is derived from the arguments provided. Create the directory if it does not exist.
+All generated files live under \`<project-path>/working-on/<feature-name>/\`.
 
 > All file paths in the instructions below are relative to \`<project-path>/working-on/<feature-name>/\`.
 
@@ -60,19 +60,39 @@ export const WORKING_DIR_STEP = `Check whether the working directory \`<project-
      - **Resume** — continue into the existing folder (proceed to the next step without recreating it)
      - **Abort** — stop and do nothing`;
 
+export const RESOLVE_FEATURE_NAME = `### Resolving the Feature Name
+
+Use the following logic to determine \`<feature-name>\`:
+
+1. If arguments were provided, derive the feature name from them:
+   - If the argument looks like a branch name (no spaces, kebab-case or slash-separated), use the last segment (after the last \`/\`, or the full value if no \`/\` is present).
+   - Otherwise treat it as a human-readable description and convert it to a feature name following the constraints in the Feature Name Constraints section.
+2. If **no arguments were provided**:
+   - List all folders under \`<project-path>/working-on/\`.
+   - If there is **only one folder**, use it automatically and inform the user.
+   - If there are **multiple folders**, present the list to the user and ask them to pick one.
+   - If there are **no folders**, inform the user that no in-progress features were found and stop.`;
+
 export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
+
+export interface CommandDefinitionContext {
+  args: ArgPlaceholder;
+  npxCommand: string;
+}
 
 export interface CommandDefinition {
   name: string;
   description: string;
-  body: (args: ArgPlaceholder, npxCommand: string) => string;
+  body: (ctx: CommandDefinitionContext) => string;
 }
 
 export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: 'osddt.continue',
     description: 'Detect the current workflow phase and prompt the next command to run',
-    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}${RESOLVE_FEATURE_NAME}
+
+## Instructions
 
 Check the working directory \`<project-path>/working-on/<feature-name>\` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
@@ -97,7 +117,7 @@ ${args}
   {
     name: 'osddt.research',
     description: 'Research a topic and write a research file to inform the feature specification',
-    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
 
 The argument provided is: ${args}
 
@@ -147,7 +167,7 @@ Run the following command to write the feature specification:
   {
     name: 'osddt.start',
     description: 'Start a new feature by creating a branch and working-on folder',
-    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
 
 The argument provided is: ${args}
 
@@ -193,7 +213,7 @@ Run the following command to write the feature specification:
   {
     name: 'osddt.spec',
     description: 'Analyze requirements and write a feature specification',
-    body: (args) => `## Instructions
+    body: ({ args }) => `## Instructions
 
 1. Check whether \`osddt.research.md\` exists in the working directory.
    - If it exists, read it and use its findings (key insights, constraints, open questions, codebase findings) as additional context when writing the specification.
@@ -232,7 +252,7 @@ Run the following command to create the implementation plan:
   {
     name: 'osddt.clarify',
     description: 'Resolve open questions in the spec and record decisions',
-    body: (_args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
+    body: () => `## Instructions
 
 1. Check whether \`osddt.spec.md\` exists in the working directory:
    - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec <brief feature description>\` first. Stop here.
@@ -265,7 +285,9 @@ Run the following command to create the implementation plan:
   {
     name: 'osddt.plan',
     description: 'Create a technical implementation plan from a specification',
-    body: (args) => `## Instructions
+    body: ({ args }) => `${RESOLVE_FEATURE_NAME}
+
+## Instructions
 
 1. Check whether \`osddt.plan.md\` already exists in the working directory:
    - If it **does not exist**, proceed to generate it.
@@ -310,7 +332,9 @@ Run the following command to generate the task list:
   {
     name: 'osddt.tasks',
     description: 'Generate actionable tasks from an implementation plan',
-    body: () => `## Instructions
+    body: () => `${RESOLVE_FEATURE_NAME}
+
+## Instructions
 
 1. Check whether \`osddt.tasks.md\` already exists in the working directory:
    - If it **does not exist**, proceed to generate it.
@@ -371,18 +395,10 @@ Once all tasks are checked off, run the following command to mark the feature as
   {
     name: 'osddt.done',
     description: 'Mark a feature as done and move it from working-on to done',
-    body: (args, npxCommand) => `## Instructions
+    body: ({ npxCommand }) => `## Instructions
 
-1. Resolve the project path:
-   - Read \`.osddtrc\` from the repository root.
-   - If \`repoType\` is \`"single"\`: the project path is the repository root.
-   - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
-2. Identify the feature to close:
-   - List all folders under \`<project-path>/working-on/\`.
-   - If there is only one folder, use it automatically.
-   - If there are multiple folders, present the list to the user and ask which one to close.
-3. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
-4. Run the following command to move the feature folder from \`working-on\` to \`done\`:
+1. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
+2. Run the following command to move the feature folder from \`working-on\` to \`done\`:
 
 \`\`\`
 ${npxCommand} done <feature-name> --dir <project-path>
@@ -391,7 +407,7 @@ ${npxCommand} done <feature-name> --dir <project-path>
    The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.
    For example, \`working-on/feature-a\` will be moved to \`done/YYYY-MM-DD-feature-a\`.
 
-5. Report the result of the command, including the full destination path
+3. Report the result of the command, including the full destination path
 `,
   },
 ];

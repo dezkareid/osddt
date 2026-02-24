@@ -21,6 +21,6 @@ export function getClaudeTemplates(cwd: string, npxCommand: string): CommandFile
 
   return COMMAND_DEFINITIONS.map((cmd) => ({
     filePath: path.join(dir, `${cmd.name}.md`),
-    content: formatClaudeCommand(cmd.description, cmd.body('$ARGUMENTS', npxCommand)),
+    content: formatClaudeCommand(cmd.description, cmd.body({ args: '$ARGUMENTS', npxCommand })),
   }));
 }

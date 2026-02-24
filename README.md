@@ -32,7 +32,7 @@ npx @dezkareid/osddt setup --agents claude,gemini --repo-type single
 
 Run `npx @dezkareid/osddt setup` once to generate the agent command files.
 
-`osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. Use `osddt.continue` to resume an in-progress feature from a new session.
+`osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. If you close the coding session, you should execute the `osddt.continue` command to resume the workflow.
 
 ```
 osddt.continue ──────────────────────────────────────────────────────────────────────────────────────┐
