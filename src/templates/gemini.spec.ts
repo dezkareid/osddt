@@ -4,7 +4,7 @@ import { COMMAND_DEFINITIONS } from './shared.js';
 
 describe('getGeminiTemplates', () => {
   const cwd = '/project';
-  const templates = getGeminiTemplates(cwd);
+  const templates = getGeminiTemplates(cwd, 'npx osddt');
 
   it('should generate one file per command definition', () => {
     expect(templates).toHaveLength(COMMAND_DEFINITIONS.length);

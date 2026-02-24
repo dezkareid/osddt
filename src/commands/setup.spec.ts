@@ -25,6 +25,7 @@ afterEach(() => {
 describe('setup command', () => {
   describe('given --agents and --repo-type are both provided', () => {
     it('should skip both prompts and write claude files with single config', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -36,7 +37,7 @@ describe('setup command', () => {
 
       expect(askAgents).not.toHaveBeenCalled();
       expect(askRepoType).not.toHaveBeenCalled();
-      expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project');
+      expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project', 'npx osddt');
       expect(fs.writeJson).toHaveBeenCalledWith(
         expect.stringContaining('.osddtrc'),
         { repoType: 'single' },
@@ -47,6 +48,7 @@ describe('setup command', () => {
 
   describe('given --agents claude,gemini and --repo-type monorepo', () => {
     it('should write both claude and gemini files', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(getGeminiTemplates).mockReturnValue([GEMINI_FILE]);
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
@@ -60,8 +62,8 @@ describe('setup command', () => {
         { from: 'user' },
       );
 
-      expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project');
-      expect(getGeminiTemplates).toHaveBeenCalledWith('/tmp/project');
+      expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project', 'npx osddt');
+      expect(getGeminiTemplates).toHaveBeenCalledWith('/tmp/project', 'npx osddt');
       expect(fs.writeJson).toHaveBeenCalledWith(
         expect.stringContaining('.osddtrc'),
         { repoType: 'monorepo' },
@@ -72,6 +74,7 @@ describe('setup command', () => {
 
   describe('given only --agents is provided', () => {
     it('should skip askAgents but call askRepoType', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
       vi.mocked(askRepoType).mockResolvedValue('single');
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
@@ -89,6 +92,7 @@ describe('setup command', () => {
 
   describe('given only --repo-type is provided', () => {
     it('should skip askRepoType but call askAgents', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
       vi.mocked(askAgents).mockResolvedValue(['claude']);
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
@@ -106,6 +110,7 @@ describe('setup command', () => {
 
   describe('given no flags are provided', () => {
     it('should call both prompts', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
       vi.mocked(askAgents).mockResolvedValue(['claude']);
       vi.mocked(askRepoType).mockResolvedValue('single');
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
@@ -119,6 +124,38 @@ describe('setup command', () => {
 
       expect(askAgents).toHaveBeenCalledOnce();
       expect(askRepoType).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('given no package.json in the target directory', () => {
+    it('should fall back to npx @dezkareid/osddt', async () => {
+      vi.mocked(fs.readJson).mockRejectedValue(new Error('ENOENT'));
+      vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = setupCommand();
+      await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
+
+      expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project', 'npx @dezkareid/osddt');
+    });
+  });
+
+  describe('given package.json without @dezkareid/osddt in deps', () => {
+    it('should fall back to npx @dezkareid/osddt', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ dependencies: { 'some-other-package': '1.0.0' } });
+      vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = setupCommand();
+      await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
+
+      expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project', 'npx @dezkareid/osddt');
     });
   });
 

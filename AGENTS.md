@@ -131,14 +131,29 @@ osddt/
 
 ### CLI Commands
 
-All commands available via `npx @dezkareid/osddt <command>`:
+#### Invocation forms
 
-| Command                                                              | Description                                                   |
-| -------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `@dezkareid/osddt setup`                                             | Generate agent command files for Claude and Gemini            |
-| `@dezkareid/osddt setup --agents <list> --repo-type <type>`          | Non-interactive setup (for CI/scripted environments)          |
-| `@dezkareid/osddt meta-info`                                         | Output current branch and date as JSON                        |
-| `@dezkareid/osddt done <feature-name> --dir <project-path>`          | Move `working-on/<feature>` to `done/<feature>`               |
+There are two contexts in which osddt commands are invoked:
+
+| Context | Command prefix | When to use |
+| ------- | -------------- | ----------- |
+| **Local development of this package** | `osddt` | Working inside this repository — the binary is available directly because the package is installed locally |
+| **External project** (using osddt as a dependency) | `npx @dezkareid/osddt` | Running from a project that lists `@dezkareid/osddt` as a dependency |
+
+When `osddt setup` is run, it reads the `name` field of `package.json` in the target directory. If the name is `@dezkareid/osddt`, templates are written with `npx osddt`. Otherwise they fall back to `npx @dezkareid/osddt`. The resolution lives in `resolveNpxCommand()` in `src/commands/setup.ts`.
+
+#### Available commands
+
+| Command                                                              | Context       | Description                                                   |
+| -------------------------------------------------------------------- | ------------- | ------------------------------------------------------------- |
+| `osddt setup`                                                        | Local dev     | Generate agent command files for Claude and Gemini            |
+| `osddt setup --agents <list> --repo-type <type>`                     | Local dev     | Non-interactive setup (for CI/scripted environments)          |
+| `npx @dezkareid/osddt setup`                                         | External      | Generate agent command files for Claude and Gemini            |
+| `npx @dezkareid/osddt setup --agents <list> --repo-type <type>`      | External      | Non-interactive setup (for CI/scripted environments)          |
+| `osddt meta-info`                                                    | Local dev     | Output current branch and date as JSON                        |
+| `npx @dezkareid/osddt meta-info`                                     | External      | Output current branch and date as JSON                        |
+| `osddt done <feature-name> --dir <project-path>`                     | Local dev     | Move `working-on/<feature>` to `done/<feature>`               |
+| `npx @dezkareid/osddt done <feature-name> --dir <project-path>`      | External      | Move `working-on/<feature>` to `done/<feature>`               |
 
 #### `osddt setup` options
 

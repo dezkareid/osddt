@@ -1,9 +1,11 @@
-export const REPO_PREAMBLE = `## Context
+
+export function getRepoPreamble(npxCommand: string): string {
+  return `## Context
 
 Before proceeding, run the following command and parse the JSON output to get the current branch and date:
 
 \`\`\`
-npx @dezkareid/osddt meta-info
+${npxCommand} meta-info
 \`\`\`
 
 ## Repository Configuration
@@ -25,6 +27,7 @@ All generated files live under \`<project-path>/working-on/<feature-name>/\`. Th
 > All file paths in the instructions below are relative to \`<project-path>/working-on/<feature-name>/\`.
 
 `;
+}
 
 export const FEATURE_NAME_RULES = `### Feature Name Constraints
 
@@ -62,14 +65,14 @@ export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
 export interface CommandDefinition {
   name: string;
   description: string;
-  body: (args: ArgPlaceholder) => string;
+  body: (args: ArgPlaceholder, npxCommand: string) => string;
 }
 
 export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: 'osddt.continue',
     description: 'Detect the current workflow phase and prompt the next command to run',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
 
 Check the working directory \`<project-path>/working-on/<feature-name>\` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
@@ -92,7 +95,7 @@ ${args}
   {
     name: 'osddt.research',
     description: 'Research a topic and write a research file to inform the feature specification',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
 
 The argument provided is: ${args}
 
@@ -142,7 +145,7 @@ Run the following command to write the feature specification:
   {
     name: 'osddt.start',
     description: 'Start a new feature by creating a branch and working-on folder',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
 
 The argument provided is: ${args}
 
@@ -335,7 +338,7 @@ Once all tasks are checked off, run the following command to mark the feature as
   {
     name: 'osddt.done',
     description: 'Mark a feature as done and move it from working-on to done',
-    body: (args) => `## Instructions
+    body: (args, npxCommand) => `## Instructions
 
 1. Resolve the project path:
    - Read \`.osddtrc\` from the repository root.
@@ -346,7 +349,7 @@ Once all tasks are checked off, run the following command to mark the feature as
 4. Run the following command to move the feature folder from \`working-on\` to \`done\`:
 
 \`\`\`
-npx @dezkareid/osddt done <feature-name> --dir <project-path>
+${npxCommand} done <feature-name> --dir <project-path>
 \`\`\`
 
    The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.

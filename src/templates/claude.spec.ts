@@ -4,7 +4,7 @@ import { COMMAND_DEFINITIONS } from './shared.js';
 
 describe('getClaudeTemplates', () => {
   const cwd = '/project';
-  const templates = getClaudeTemplates(cwd);
+  const templates = getClaudeTemplates(cwd, 'npx osddt');
 
   it('should generate one file per command definition', () => {
     expect(templates).toHaveLength(COMMAND_DEFINITIONS.length);
