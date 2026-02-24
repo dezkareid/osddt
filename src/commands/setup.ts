@@ -5,6 +5,21 @@ import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
 import { askRepoType, askAgents, type RepoType, type AgentType } from '../utils/prompt.js';
 
+const CANONICAL_PACKAGE_NAME = '@dezkareid/osddt';
+const NPX_COMMAND = 'npx osddt';
+const NPX_COMMAND_FALLBACK = `npx ${CANONICAL_PACKAGE_NAME}`;
+
+async function resolveNpxCommand(cwd: string): Promise<string> {
+  const pkgPath = path.join(cwd, 'package.json');
+  try {
+    const pkg = await fs.readJson(pkgPath) as { name?: string };
+    if (pkg.name === CANONICAL_PACKAGE_NAME) return NPX_COMMAND;
+  } catch {
+    // no package.json or unreadable — fall through to default
+  }
+  return NPX_COMMAND_FALLBACK;
+}
+
 interface CommandFile {
   filePath: string;
   content: string;
@@ -66,10 +81,12 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): 
     rawRepoType !== undefined ? parseRepoType(rawRepoType) : await askRepoType();
   if (rawRepoType === undefined) console.log('');
 
+  const npxCommand = await resolveNpxCommand(cwd);
+
   console.log('Setting up OSDDT command files...\n');
 
   if (agents.includes('claude')) {
-    const claudeFiles = getClaudeTemplates(cwd);
+    const claudeFiles = getClaudeTemplates(cwd, npxCommand);
     console.log('Claude Code commands (.claude/commands/):');
     for (const file of claudeFiles) {
       await writeCommandFile(file);
@@ -78,7 +95,7 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): 
   }
 
   if (agents.includes('gemini')) {
-    const geminiFiles = getGeminiTemplates(cwd);
+    const geminiFiles = getGeminiTemplates(cwd, npxCommand);
     console.log('Gemini CLI commands (.gemini/commands/):');
     for (const file of geminiFiles) {
       await writeCommandFile(file);

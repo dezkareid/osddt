@@ -1,23 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { REPO_PREAMBLE, FEATURE_NAME_RULES, WORKING_DIR_STEP, COMMAND_DEFINITIONS } from './shared.js';
+import {
+  getRepoPreamble,
+  FEATURE_NAME_RULES,
+  WORKING_DIR_STEP,
+  RESOLVE_FEATURE_NAME,
+  COMMAND_DEFINITIONS,
+} from './shared.js';
 
-describe('REPO_PREAMBLE', () => {
-  it('should instruct the agent to run npx osddt meta-info', () => {
-    expect(REPO_PREAMBLE).toContain('npx @dezkareid/osddt meta-info');
+describe('getRepoPreamble', () => {
+  it('should include the provided npx command in the meta-info call', () => {
+    expect(getRepoPreamble('npx osddt')).toContain('npx osddt meta-info');
+    expect(getRepoPreamble('npx @dezkareid/osddt')).toContain('npx @dezkareid/osddt meta-info');
   });
 
   it('should describe the working-on folder structure', () => {
-    expect(REPO_PREAMBLE).toContain('working-on/<feature-name>');
+    expect(getRepoPreamble('npx osddt')).toContain('working-on/<feature-name>');
   });
 
   it('should explain single repo project path resolution', () => {
-    expect(REPO_PREAMBLE).toContain('"single"');
-    expect(REPO_PREAMBLE).toContain('repository root');
+    expect(getRepoPreamble('npx osddt')).toContain('"single"');
+    expect(getRepoPreamble('npx osddt')).toContain('repository root');
   });
 
   it('should explain monorepo project path resolution', () => {
-    expect(REPO_PREAMBLE).toContain('"monorepo"');
-    expect(REPO_PREAMBLE).toContain('packages/my-package');
+    expect(getRepoPreamble('npx osddt')).toContain('"monorepo"');
+    expect(getRepoPreamble('npx osddt')).toContain('packages/my-package');
   });
 });
 
@@ -69,9 +76,32 @@ describe('WORKING_DIR_STEP', () => {
   });
 });
 
+describe('RESOLVE_FEATURE_NAME', () => {
+  it('should instruct deriving the feature name from arguments when provided', () => {
+    expect(RESOLVE_FEATURE_NAME).toContain('arguments were provided');
+  });
+
+  it('should instruct listing folders under working-on/ when no arguments are provided', () => {
+    expect(RESOLVE_FEATURE_NAME).toContain('working-on/');
+    expect(RESOLVE_FEATURE_NAME).toContain('no arguments were provided');
+  });
+
+  it('should instruct using the only folder automatically when there is one', () => {
+    expect(RESOLVE_FEATURE_NAME).toContain('only one folder');
+  });
+
+  it('should instruct asking the user to pick when there are multiple folders', () => {
+    expect(RESOLVE_FEATURE_NAME).toContain('multiple folders');
+  });
+
+  it('should instruct stopping when no folders are found', () => {
+    expect(RESOLVE_FEATURE_NAME).toContain('no in-progress features were found');
+  });
+});
+
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 8 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(8);
+  it('should define exactly 9 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(9);
   });
 
   it('should list commands with osddt.continue first, then peer entry points, then the rest of the workflow', () => {
@@ -81,6 +111,7 @@ describe('COMMAND_DEFINITIONS', () => {
       'osddt.research',
       'osddt.start',
       'osddt.spec',
+      'osddt.clarify',
       'osddt.plan',
       'osddt.tasks',
       'osddt.implement',
@@ -95,33 +126,44 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.description).toBeTruthy();
     });
 
-    it('should include REPO_PREAMBLE to resolve project context', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain(REPO_PREAMBLE);
+    it('should include the repo preamble with the provided npx command', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getRepoPreamble('npx osddt'));
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(getRepoPreamble('npx @dezkareid/osddt'));
+    });
+
+    it('should include the feature name resolution step', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(RESOLVE_FEATURE_NAME);
     });
 
     it('should detect the implementing phase from osddt.tasks.md with unchecked tasks', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('osddt.tasks.md');
       expect(body).toContain('- [ ]');
-      expect(body).toContain('/osddt.implement $ARGUMENTS');
+      expect(body).toContain('/osddt.implement');
     });
 
     it('should detect the ready-to-close phase when all tasks are checked', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('- [x]');
-      expect(body).toContain('/osddt.done $ARGUMENTS');
+      expect(body).toContain('/osddt.done');
     });
 
     it('should detect spec-done phase from osddt.spec.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.plan $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.plan');
     });
 
     it('should detect research-done phase from osddt.research.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
     });
 
     it('should report the file found and the command to run next', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('exact command the user should run next');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('exact command the user should run next');
+    });
+
+    it('should recommend osddt.clarify when spec or plan phase has unanswered open questions', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('/osddt.clarify');
+      expect(body).toContain('unanswered open questions');
     });
   });
 
@@ -132,43 +174,44 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.description).toBeTruthy();
     });
 
-    it('should include REPO_PREAMBLE to establish project context', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain(REPO_PREAMBLE);
+    it('should include the repo preamble with the provided npx command', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getRepoPreamble('npx osddt'));
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(getRepoPreamble('npx @dezkareid/osddt'));
     });
 
     it('should include the $ARGUMENTS placeholder in its body', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('$ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('$ARGUMENTS');
     });
 
     it('should instruct writing to osddt.research.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.research.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.research.md');
     });
 
     it('should instruct creating the working-on directory', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('working-on/<feature-name>');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('working-on/<feature-name>');
     });
 
     it('should instruct exploring the existing codebase', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('existing codebase');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('existing codebase');
     });
 
     it('should define a research file format with key sections', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('Key Insights');
       expect(body).toContain('Constraints & Risks');
       expect(body).toContain('Open Questions');
     });
 
     it('should apply feature name constraints', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Maximum length: 30 characters');
     });
 
     it('should include the shared working directory check step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain(WORKING_DIR_STEP);
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(WORKING_DIR_STEP);
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
     });
   });
 
@@ -179,48 +222,49 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.description).toBeTruthy();
     });
 
-    it('should include REPO_PREAMBLE to establish project context', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain(REPO_PREAMBLE);
+    it('should include the repo preamble with the provided npx command', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getRepoPreamble('npx osddt'));
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(getRepoPreamble('npx @dezkareid/osddt'));
     });
 
     it('should include the $ARGUMENTS placeholder in its body', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('$ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('$ARGUMENTS');
     });
 
     it('should instruct deriving branch name from description when no branch is given', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('feat/<derived-name>');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('feat/<derived-name>');
     });
 
     it('should instruct using input as-is when it looks like a branch name', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('use it as-is');
     });
 
     it('should instruct creating the git branch', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('git checkout -b');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('git checkout -b');
     });
 
     it('should explain feature-name derivation from branch name', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('last segment of the branch name');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('last segment of the branch name');
     });
 
     it('should apply feature name constraints', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('Maximum length: 30 characters');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Maximum length: 30 characters');
     });
 
     it('should warn and offer Resume or Abort when branch already exists', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('already exists');
       expect(body).toContain('Resume');
       expect(body).toContain('Abort');
     });
 
     it('should include the shared working directory check step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain(WORKING_DIR_STEP);
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(WORKING_DIR_STEP);
     });
 
     it('should prompt the user to run osddt.spec as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.spec $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
     });
   });
 
@@ -232,85 +276,133 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should include the $ARGUMENTS placeholder in its body', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('$ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('$ARGUMENTS');
     });
 
     it('should instruct writing to osddt.spec.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.spec.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.spec.md');
     });
 
     it('should instruct checking for osddt.research.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.research.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.research.md');
     });
 
     it('should instruct using research findings when the file exists', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('key insights, constraints, open questions, codebase findings');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('key insights, constraints, open questions, codebase findings');
     });
 
     it('should instruct proceeding without research when the file does not exist', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('does not exist, proceed');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('does not exist, proceed');
     });
 
     it('should instruct adding a Research Summary section when research was found', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('Research Summary');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Research Summary');
     });
 
     it('should prompt the user to run osddt.plan as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.plan $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.plan');
+    });
+  });
+
+  describe('osddt.clarify', () => {
+    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.clarify')!;
+
+    it('should have a description', () => {
+      expect(cmd.description).toBeTruthy();
+    });
+
+    it('should instruct locating osddt.spec.md and stopping when absent', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('osddt.spec.md');
+      expect(body).toContain('/osddt.spec');
+    });
+
+    it('should instruct reading the Open Questions section', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Open Questions');
+    });
+
+    it('should instruct reading the Decisions section to detect already-answered questions', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Decisions');
+    });
+
+    it('should instruct writing decisions back to the Decisions section of osddt.spec.md', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('Decisions');
+      expect(body).toContain('osddt.spec.md');
+    });
+
+    it('should prompt the user to run osddt.plan as the next step', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.plan');
     });
   });
 
   describe('osddt.plan', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.plan')!;
 
+    it('should include the feature name resolution step', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(RESOLVE_FEATURE_NAME);
+    });
+
     it('should instruct reading osddt.spec.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.spec.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.spec.md');
     });
 
     it('should instruct writing to osddt.plan.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.plan.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.plan.md');
     });
 
     it('should check whether osddt.plan.md already exists', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('already exists');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('already exists');
     });
 
     it('should offer Regenerate, Update, and Do nothing when the file exists', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('Regenerate');
       expect(body).toContain('Update');
       expect(body).toContain('Do nothing');
     });
 
+    it('should check for unanswered open questions and offer Clarify first or Proceed anyway', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('unanswered open question');
+      expect(body).toContain('/osddt.clarify');
+      expect(body).toContain('Clarify first');
+      expect(body).toContain('Proceed anyway');
+    });
+
     it('should prompt the user to run osddt.tasks as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.tasks $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.tasks');
     });
   });
 
   describe('osddt.tasks', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.tasks')!;
 
+    it('should include the feature name resolution step', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(RESOLVE_FEATURE_NAME);
+    });
+
     it('should instruct reading osddt.plan.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.plan.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.plan.md');
     });
 
     it('should instruct writing to osddt.tasks.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.tasks.md');
     });
 
     it('should check whether osddt.tasks.md already exists', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('already exists');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('already exists');
     });
 
-    it('should offer Regenerate, Update, and Do nothing when the file exists', () => {
-      const body = cmd.body('$ARGUMENTS');
+    it('should offer Regenerate and Do nothing when the file exists (no Update option)', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('Regenerate');
-      expect(body).toContain('Update');
+      expect(body).not.toContain('Update');
       expect(body).toContain('Do nothing');
     });
 
     it('should prompt the user to run osddt.implement as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.implement $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.implement');
     });
   });
 
@@ -318,50 +410,37 @@ describe('COMMAND_DEFINITIONS', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.implement')!;
 
     it('should instruct reading osddt.tasks.md', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.tasks.md');
     });
 
     it('should instruct stopping when osddt.tasks.md does not exist', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.tasks $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.tasks');
     });
 
 
     it('should instruct implementing one task at a time', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('one task at a time');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('one task at a time');
     });
 
     it('should prompt the user to run osddt.done as the next step', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('/osddt.done $ARGUMENTS');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.done');
     });
   });
 
   describe('osddt.done', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.done')!;
 
-    it('should instruct reading .osddtrc to resolve the project path', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('.osddtrc');
-    });
-
-    it('should instruct resolving the project path for single and monorepo types', () => {
-      const body = cmd.body('$ARGUMENTS');
-      expect(body).toContain('"single"');
-      expect(body).toContain('"monorepo"');
-    });
-
     it('should instruct verifying all tasks are checked off', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('osddt.tasks.md');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.tasks.md');
     });
 
-    it('should instruct running npx osddt done with the derived feature name and --dir', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('npx @dezkareid/osddt done <feature-name> --dir <project-path>');
-    });
-
-    it('should instruct deriving the feature name from args to match the working-on folder', () => {
-      expect(cmd.body('$ARGUMENTS')).toContain('working-on/');
+    it('should instruct running the npx command with done and --dir', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(`${'npx osddt'} done <feature-name> --dir <project-path>`);
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(`${'npx @dezkareid/osddt'} done <feature-name> --dir <project-path>`);
     });
 
     it('should inform the agent that the destination folder is prefixed with the date', () => {
-      const body = cmd.body('$ARGUMENTS');
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('YYYY-MM-DD');
       expect(body).toContain('YYYY-MM-DD-feature-a');
     });

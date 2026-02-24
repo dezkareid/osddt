@@ -7,7 +7,7 @@ description: "Start a new feature by creating a branch and working-on folder"
 Before proceeding, run the following command and parse the JSON output to get the current branch and date:
 
 ```
-npx @dezkareid/osddt meta-info
+npx osddt meta-info
 ```
 
 ## Repository Configuration
@@ -24,7 +24,7 @@ Before proceeding, read the `.osddtrc` file in the root of the repository to det
 
 ## Working Directory
 
-All generated files live under `<project-path>/working-on/<feature-name>/`. The `<feature-name>` is derived from the arguments provided. Create the directory if it does not exist.
+All generated files live under `<project-path>/working-on/<feature-name>/`.
 
 > All file paths in the instructions below are relative to `<project-path>/working-on/<feature-name>/`.
 
@@ -94,5 +94,5 @@ $ARGUMENTS
 Run the following command to write the feature specification:
 
 ```
-/osddt.spec $ARGUMENTS
+/osddt.spec <brief description of the feature being built>
 ```

@@ -1,9 +1,11 @@
-export const REPO_PREAMBLE = `## Context
+
+export function getRepoPreamble(npxCommand: string): string {
+  return `## Context
 
 Before proceeding, run the following command and parse the JSON output to get the current branch and date:
 
 \`\`\`
-npx @dezkareid/osddt meta-info
+${npxCommand} meta-info
 \`\`\`
 
 ## Repository Configuration
@@ -20,11 +22,12 @@ Before proceeding, read the \`.osddtrc\` file in the root of the repository to d
 
 ## Working Directory
 
-All generated files live under \`<project-path>/working-on/<feature-name>/\`. The \`<feature-name>\` is derived from the arguments provided. Create the directory if it does not exist.
+All generated files live under \`<project-path>/working-on/<feature-name>/\`.
 
 > All file paths in the instructions below are relative to \`<project-path>/working-on/<feature-name>/\`.
 
 `;
+}
 
 export const FEATURE_NAME_RULES = `### Feature Name Constraints
 
@@ -57,32 +60,54 @@ export const WORKING_DIR_STEP = `Check whether the working directory \`<project-
      - **Resume** — continue into the existing folder (proceed to the next step without recreating it)
      - **Abort** — stop and do nothing`;
 
+export const RESOLVE_FEATURE_NAME = `### Resolving the Feature Name
+
+Use the following logic to determine \`<feature-name>\`:
+
+1. If arguments were provided, derive the feature name from them:
+   - If the argument looks like a branch name (no spaces, kebab-case or slash-separated), use the last segment (after the last \`/\`, or the full value if no \`/\` is present).
+   - Otherwise treat it as a human-readable description and convert it to a feature name following the constraints in the Feature Name Constraints section.
+2. If **no arguments were provided**:
+   - List all folders under \`<project-path>/working-on/\`.
+   - If there is **only one folder**, use it automatically and inform the user.
+   - If there are **multiple folders**, present the list to the user and ask them to pick one.
+   - If there are **no folders**, inform the user that no in-progress features were found and stop.`;
+
 export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
+
+export interface CommandDefinitionContext {
+  args: ArgPlaceholder;
+  npxCommand: string;
+}
 
 export interface CommandDefinition {
   name: string;
   description: string;
-  body: (args: ArgPlaceholder) => string;
+  body: (ctx: CommandDefinitionContext) => string;
 }
 
 export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: 'osddt.continue',
     description: 'Detect the current workflow phase and prompt the next command to run',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}${RESOLVE_FEATURE_NAME}
+
+## Instructions
 
 Check the working directory \`<project-path>/working-on/<feature-name>\` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
 | Condition | Current phase | Run next |
 | --------- | ------------- | -------- |
-| \`osddt.tasks.md\` exists **and** has at least one unchecked task (\`- [ ]\`) | Implementing | \`/osddt.implement ${args}\` |
-| \`osddt.tasks.md\` exists **and** all tasks are checked (\`- [x]\`) | Ready to close | \`/osddt.done ${args}\` |
-| \`osddt.plan.md\` exists | Planning done | \`/osddt.tasks ${args}\` |
-| \`osddt.spec.md\` exists | Spec done | \`/osddt.plan ${args}\` |
-| \`osddt.research.md\` exists | Research done | \`/osddt.spec ${args}\` |
-| None of the above | Not started | \`/osddt.spec ${args}\` (or \`/osddt.research ${args}\` if research is needed first) |
+| \`osddt.tasks.md\` exists **and** has at least one unchecked task (\`- [ ]\`) | Implementing | \`/osddt.implement\` |
+| \`osddt.tasks.md\` exists **and** all tasks are checked (\`- [x]\`) | Ready to close | \`/osddt.done\` |
+| \`osddt.plan.md\` exists | Planning done | \`/osddt.tasks\` |
+| \`osddt.spec.md\` exists | Spec done | \`/osddt.plan <tech stack and key technical decisions>\` |
+| \`osddt.research.md\` exists | Research done | \`/osddt.spec <brief feature description>\` |
+| None of the above | Not started | \`/osddt.spec <brief feature description>\` (or \`/osddt.research <topic>\` if research is needed first) |
 
 Report which file was found, which phase that corresponds to, and the exact command the user should run next.
+
+> **Open Questions check**: After reporting the phase, if the detected phase is **Spec done** or **Planning done**, also check whether \`osddt.spec.md\` contains any unanswered open questions (items in the **Open Questions** section with no corresponding entry in the **Decisions** section). If unanswered questions exist, inform the user and recommend running \`/osddt.clarify <feature-name>\` before (or in addition to) the suggested next command.
 
 ## Arguments
 
@@ -92,7 +117,7 @@ ${args}
   {
     name: 'osddt.research',
     description: 'Research a topic and write a research file to inform the feature specification',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
 
 The argument provided is: ${args}
 
@@ -135,14 +160,14 @@ ${args}
 Run the following command to write the feature specification:
 
 \`\`\`
-/osddt.spec ${args}
+/osddt.spec <brief description of the feature or topic researched>
 \`\`\`
 `,
   },
   {
     name: 'osddt.start',
     description: 'Start a new feature by creating a branch and working-on folder',
-    body: (args) => `${REPO_PREAMBLE}## Instructions
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
 
 The argument provided is: ${args}
 
@@ -181,14 +206,14 @@ ${args}
 Run the following command to write the feature specification:
 
 \`\`\`
-/osddt.spec ${args}
+/osddt.spec <brief description of the feature being built>
 \`\`\`
 `,
   },
   {
     name: 'osddt.spec',
     description: 'Analyze requirements and write a feature specification',
-    body: (args) => `## Instructions
+    body: ({ args }) => `## Instructions
 
 1. Check whether \`osddt.research.md\` exists in the working directory.
    - If it exists, read it and use its findings (key insights, constraints, open questions, codebase findings) as additional context when writing the specification.
@@ -220,14 +245,49 @@ ${args}
 Run the following command to create the implementation plan:
 
 \`\`\`
-/osddt.plan ${args}
+/osddt.plan <tech stack and key technical decisions, e.g. "use Node.js with SQLite, REST API, no auth">
 \`\`\`
+`,
+  },
+  {
+    name: 'osddt.clarify',
+    description: 'Resolve open questions in the spec and record decisions',
+    body: () => `## Instructions
+
+1. Check whether \`osddt.spec.md\` exists in the working directory:
+   - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec <brief feature description>\` first. Stop here.
+
+2. Read \`osddt.spec.md\` and extract all items listed under the **Open Questions** section.
+   - If the **Open Questions** section is absent or empty, inform the user that there are no open questions to resolve. Skip to step 6.
+
+3. Read the **Decisions** section of \`osddt.spec.md\` (if it exists) to determine which questions have already been answered.
+   - A question is considered answered if there is a corresponding numbered entry in the **Decisions** section.
+   - List the already-answered questions to the user and inform them they will be skipped.
+
+4. For each **unanswered** question (in order), present it to the user and collect a response.
+   - If all questions were already answered, inform the user and skip to step 6.
+
+5. Update the **Decisions** section in \`osddt.spec.md\`:
+   - If a **Decisions** section already exists, append new entries to it (do not modify existing entries).
+   - If no **Decisions** section exists, add one at the end of the file.
+   - Each decision entry uses the format: \`N. **<short question summary>**: <answer>\`
+   - The **Open Questions** section is left unchanged.
+
+6. Inform the user that all questions are now resolved (or were already resolved). Then prompt them to run (or re-run) the plan step so it reflects the updated decisions:
+
+\`\`\`
+/osddt.plan <tech stack and key technical decisions, e.g. "use Node.js with SQLite, REST API, no auth">
+\`\`\`
+
+> Note: if \`osddt.plan.md\` already exists, the plan should be regenerated to incorporate the decisions.
 `,
   },
   {
     name: 'osddt.plan',
     description: 'Create a technical implementation plan from a specification',
-    body: (args) => `## Instructions
+    body: ({ args }) => `${RESOLVE_FEATURE_NAME}
+
+## Instructions
 
 1. Check whether \`osddt.plan.md\` already exists in the working directory:
    - If it **does not exist**, proceed to generate it.
@@ -236,9 +296,16 @@ Run the following command to create the implementation plan:
      - **Update** — read the existing file and apply targeted changes based on ${args}
      - **Do nothing** — stop here and leave the file as-is
 2. Read \`osddt.spec.md\` from the working directory
-3. Break down the implementation into logical phases and steps
-4. Identify technical decisions, dependencies, and risks
-5. Write the plan to \`osddt.plan.md\` in the working directory
+3. Check for unanswered open questions in the spec:
+   - Count the items in the **Open Questions** section that have no corresponding entry in the **Decisions** section.
+   - If there are any unanswered questions, inform the user: "This spec has X unanswered open question(s)."
+   - Ask the user whether to:
+     - **Clarify first** — stop here and suggest running \`/osddt.clarify <feature-name>\` instead
+     - **Proceed anyway** — continue with plan generation using the spec as-is
+   - If there are no unanswered questions, proceed silently.
+4. Break down the implementation into logical phases and steps
+5. Identify technical decisions, dependencies, and risks
+6. Write the plan to \`osddt.plan.md\` in the working directory
 
 ## Plan Format
 
@@ -258,20 +325,21 @@ ${args}
 Run the following command to generate the task list:
 
 \`\`\`
-/osddt.tasks ${args}
+/osddt.tasks
 \`\`\`
 `,
   },
   {
     name: 'osddt.tasks',
     description: 'Generate actionable tasks from an implementation plan',
-    body: (args) => `## Instructions
+    body: () => `${RESOLVE_FEATURE_NAME}
+
+## Instructions
 
 1. Check whether \`osddt.tasks.md\` already exists in the working directory:
    - If it **does not exist**, proceed to generate it.
    - If it **already exists**, ask the user whether to:
      - **Regenerate** — discard the existing file and create a fresh task list from scratch
-     - **Update** — read the existing file and apply targeted changes based on ${args}
      - **Do nothing** — stop here and leave the file as-is
 2. Read \`osddt.plan.md\` from the working directory
 3. Break each phase into discrete, executable tasks
@@ -286,26 +354,22 @@ The task list should include:
 - **Dependencies**: Note which tasks must complete before others
 - **Definition of Done**: Clear completion criteria per phase
 
-## Arguments
-
-${args}
-
 ## Next Step
 
 Run the following command to start implementing tasks:
 
 \`\`\`
-/osddt.implement ${args}
+/osddt.implement
 \`\`\`
 `,
   },
   {
     name: 'osddt.implement',
     description: 'Execute tasks from the task list one by one',
-    body: (args) => `## Instructions
+    body: () => `## Instructions
 
 1. Check whether \`osddt.tasks.md\` exists in the working directory:
-   - If it **does not exist**, stop and ask the user to run \`/osddt.tasks ${args}\` first.
+   - If it **does not exist**, stop and ask the user to run \`/osddt.tasks\` first.
 2. Read \`osddt.tasks.md\` from the working directory
 3. Find the next unchecked task (\`- [ ]\`)
 4. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`) in the working directory
@@ -319,44 +383,31 @@ Run the following command to start implementing tasks:
 - Write tests for new functionality when applicable
 - Ask for clarification if requirements are ambiguous
 
-## Arguments
-
-${args}
-
 ## Next Step
 
 Once all tasks are checked off, run the following command to mark the feature as done:
 
 \`\`\`
-/osddt.done ${args}
+/osddt.done
 \`\`\`
 `,
   },
   {
     name: 'osddt.done',
     description: 'Mark a feature as done and move it from working-on to done',
-    body: (args) => `## Instructions
+    body: ({ npxCommand }) => `## Instructions
 
-1. Resolve the project path:
-   - Read \`.osddtrc\` from the repository root.
-   - If \`repoType\` is \`"single"\`: the project path is the repository root.
-   - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
-2. Derive the feature name from ${args} using the same rules as the other commands (last segment of a branch name, or a kebab-cased slug — subject to the 30-character limit). This must match the folder name under \`working-on/\`.
-3. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
-4. Run the following command to move the feature folder from \`working-on\` to \`done\`:
+1. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
+2. Run the following command to move the feature folder from \`working-on\` to \`done\`:
 
 \`\`\`
-npx @dezkareid/osddt done <feature-name> --dir <project-path>
+${npxCommand} done <feature-name> --dir <project-path>
 \`\`\`
 
    The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.
    For example, \`working-on/feature-a\` will be moved to \`done/YYYY-MM-DD-feature-a\`.
 
-5. Report the result of the command, including the full destination path
-
-## Arguments
-
-${args}
+3. Report the result of the command, including the full destination path
 `,
   },
 ];
