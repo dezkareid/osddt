@@ -34,5 +34,5 @@ $ARGUMENTS
 Run the following command to create the implementation plan:
 
 ```
-/osddt.plan $ARGUMENTS
+/osddt.plan <tech stack and key technical decisions, e.g. "use Node.js with SQLite, REST API, no auth">
 ```
