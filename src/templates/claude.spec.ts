@@ -30,6 +30,7 @@ describe('getClaudeTemplates', () => {
 
   it('should use $ARGUMENTS as the argument placeholder', () => {
     for (const t of templates) {
+      if (t.filePath.endsWith('osddt.done.md')) continue;
       expect(t.content).toContain('$ARGUMENTS');
     }
   });

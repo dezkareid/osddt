@@ -367,10 +367,10 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('already exists');
     });
 
-    it('should offer Regenerate, Update, and Do nothing when the file exists', () => {
+    it('should offer Regenerate and Do nothing when the file exists (no Update option)', () => {
       const body = cmd.body('$ARGUMENTS', 'npx osddt');
       expect(body).toContain('Regenerate');
-      expect(body).toContain('Update');
+      expect(body).not.toContain('Update');
       expect(body).toContain('Do nothing');
     });
 
@@ -387,7 +387,7 @@ describe('COMMAND_DEFINITIONS', () => {
     });
 
     it('should instruct stopping when osddt.tasks.md does not exist', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.tasks $ARGUMENTS');
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.tasks');
     });
 
 
@@ -422,8 +422,10 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body('$ARGUMENTS', 'npx @dezkareid/osddt')).toContain(`${'npx @dezkareid/osddt'} done <feature-name> --dir <project-path>`);
     });
 
-    it('should instruct deriving the feature name from args to match the working-on folder', () => {
-      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('working-on/');
+    it('should instruct listing folders under working-on/ to identify the feature', () => {
+      const body = cmd.body('$ARGUMENTS', 'npx osddt');
+      expect(body).toContain('working-on/');
+      expect(body).toContain('List all folders');
     });
 
     it('should inform the agent that the destination folder is prefixed with the date', () => {

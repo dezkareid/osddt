@@ -36,6 +36,7 @@ describe('getGeminiTemplates', () => {
 
   it('should use {{args}} as the argument placeholder', () => {
     for (const t of templates) {
+      if (t.filePath.endsWith('osddt.done.toml')) continue;
       expect(t.content).toContain('{{args}}');
     }
   });

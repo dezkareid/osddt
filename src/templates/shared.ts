@@ -333,7 +333,6 @@ Run the following command to generate the task list:
    - If it **does not exist**, proceed to generate it.
    - If it **already exists**, ask the user whether to:
      - **Regenerate** — discard the existing file and create a fresh task list from scratch
-     - **Update** — read the existing file and apply targeted changes based on ${args}
      - **Do nothing** — stop here and leave the file as-is
 2. Read \`osddt.plan.md\` from the working directory
 3. Break each phase into discrete, executable tasks
@@ -347,10 +346,6 @@ The task list should include:
 - Each task should be: \`- [ ] [S/M/L] Description of task\`
 - **Dependencies**: Note which tasks must complete before others
 - **Definition of Done**: Clear completion criteria per phase
-
-## Arguments
-
-${args}
 
 ## Next Step
 
@@ -367,7 +362,7 @@ Run the following command to start implementing tasks:
     body: (args) => `## Instructions
 
 1. Check whether \`osddt.tasks.md\` exists in the working directory:
-   - If it **does not exist**, stop and ask the user to run \`/osddt.tasks ${args}\` first.
+   - If it **does not exist**, stop and ask the user to run \`/osddt.tasks\` first.
 2. Read \`osddt.tasks.md\` from the working directory
 3. Find the next unchecked task (\`- [ ]\`)
 4. Implement that task following the spec (\`osddt.spec.md\`) and plan (\`osddt.plan.md\`) in the working directory
@@ -380,10 +375,6 @@ Run the following command to start implementing tasks:
 - Follow the existing code style and conventions
 - Write tests for new functionality when applicable
 - Ask for clarification if requirements are ambiguous
-
-## Arguments
-
-${args}
 
 ## Next Step
 
@@ -403,7 +394,10 @@ Once all tasks are checked off, run the following command to mark the feature as
    - Read \`.osddtrc\` from the repository root.
    - If \`repoType\` is \`"single"\`: the project path is the repository root.
    - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
-2. Derive the feature name from ${args} using the same rules as the other commands (last segment of a branch name, or a kebab-cased slug — subject to the 30-character limit). This must match the folder name under \`working-on/\`.
+2. Identify the feature to close:
+   - List all folders under \`<project-path>/working-on/\`.
+   - If there is only one folder, use it automatically.
+   - If there are multiple folders, present the list to the user and ask which one to close.
 3. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
 4. Run the following command to move the feature folder from \`working-on\` to \`done\`:
 
@@ -415,10 +409,6 @@ ${npxCommand} done <feature-name> --dir <project-path>
    For example, \`working-on/feature-a\` will be moved to \`done/YYYY-MM-DD-feature-a\`.
 
 5. Report the result of the command, including the full destination path
-
-## Arguments
-
-${args}
 `,
   },
 ];
