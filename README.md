@@ -35,10 +35,10 @@ Run `npx @dezkareid/osddt setup` once to generate the agent command files.
 `osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. Use `osddt.continue` to resume an in-progress feature from a new session.
 
 ```
-osddt.continue ──────────────────────────────────────────────────────────────────────────────┐
-                                                                                              │
-osddt.research ──┐                                                                            │
-                 ├──► osddt.spec → osddt.plan → osddt.tasks → osddt.implement → osddt.done ◄─┘
+osddt.continue ──────────────────────────────────────────────────────────────────────────────────────┐
+                                                                                                      │
+osddt.research ──┐                                                                                    │
+                 ├──► osddt.spec → [osddt.clarify] → osddt.plan → osddt.tasks → osddt.implement → osddt.done ◄─┘
 osddt.start    ──┘
 ```
 
@@ -48,6 +48,7 @@ osddt.start    ──┘
 | `osddt.research`   | Research a topic and write a research file to inform the spec      |
 | `osddt.start`      | Start a new feature by creating a branch and working-on folder     |
 | `osddt.spec`       | Analyze requirements and write a feature specification             |
+| `osddt.clarify`    | Resolve open questions in the spec and record decisions (optional) |
 | `osddt.plan`       | Create a technical implementation plan from a specification        |
 | `osddt.tasks`      | Generate actionable tasks from an implementation plan              |
 | `osddt.implement`  | Execute tasks from the task list one by one                        |

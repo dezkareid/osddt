@@ -87,6 +87,8 @@ Check the working directory \`<project-path>/working-on/<feature-name>\` for the
 
 Report which file was found, which phase that corresponds to, and the exact command the user should run next.
 
+> **Open Questions check**: After reporting the phase, if the detected phase is **Spec done** or **Planning done**, also check whether \`osddt.spec.md\` contains any unanswered open questions (items in the **Open Questions** section with no corresponding entry in the **Decisions** section). If unanswered questions exist, inform the user and recommend running \`/osddt.clarify ${args}\` before (or in addition to) the suggested next command.
+
 ## Arguments
 
 ${args}
@@ -228,6 +230,56 @@ Run the following command to create the implementation plan:
 `,
   },
   {
+    name: 'osddt.clarify',
+    description: 'Resolve open questions in the spec and record decisions',
+    body: (args, npxCommand) => `${getRepoPreamble(npxCommand)}## Instructions
+
+The argument provided is: ${args}
+
+Determine the feature name using the following logic:
+
+1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), derive the feature name from the last segment (after the last \`/\`, or the full value if no \`/\` is present).
+2. Otherwise treat ${args} as a human-readable feature description and convert it to a feature name.
+
+Apply the constraints below before using the name:
+
+${FEATURE_NAME_RULES}
+
+Once the feature name is determined:
+
+3. Check whether \`osddt.spec.md\` exists in \`working-on/<feature-name>/\`:
+   - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec ${args}\` first. Stop here.
+
+4. Read \`osddt.spec.md\` and extract all items listed under the **Open Questions** section.
+   - If the **Open Questions** section is absent or empty, inform the user that there are no open questions to resolve. Skip to step 8.
+
+5. Read the **Decisions** section of \`osddt.spec.md\` (if it exists) to determine which questions have already been answered.
+   - A question is considered answered if there is a corresponding numbered entry in the **Decisions** section.
+   - List the already-answered questions to the user and inform them they will be skipped.
+
+6. For each **unanswered** question (in order), present it to the user and collect a response.
+   - If all questions were already answered, inform the user and skip to step 8.
+
+7. Update the **Decisions** section in \`osddt.spec.md\`:
+   - If a **Decisions** section already exists, append new entries to it (do not modify existing entries).
+   - If no **Decisions** section exists, add one at the end of the file.
+   - Each decision entry uses the format: \`N. **<short question summary>**: <answer>\`
+   - The **Open Questions** section is left unchanged.
+
+8. Inform the user that all questions are now resolved (or were already resolved). Then prompt them to run (or re-run) the plan step so it reflects the updated decisions:
+
+\`\`\`
+/osddt.plan ${args}
+\`\`\`
+
+> Note: if \`osddt.plan.md\` already exists, the plan should be regenerated to incorporate the decisions.
+
+## Arguments
+
+${args}
+`,
+  },
+  {
     name: 'osddt.plan',
     description: 'Create a technical implementation plan from a specification',
     body: (args) => `## Instructions
@@ -239,9 +291,16 @@ Run the following command to create the implementation plan:
      - **Update** — read the existing file and apply targeted changes based on ${args}
      - **Do nothing** — stop here and leave the file as-is
 2. Read \`osddt.spec.md\` from the working directory
-3. Break down the implementation into logical phases and steps
-4. Identify technical decisions, dependencies, and risks
-5. Write the plan to \`osddt.plan.md\` in the working directory
+3. Check for unanswered open questions in the spec:
+   - Count the items in the **Open Questions** section that have no corresponding entry in the **Decisions** section.
+   - If there are any unanswered questions, inform the user: "This spec has X unanswered open question(s)."
+   - Ask the user whether to:
+     - **Clarify first** — stop here and suggest running \`/osddt.clarify ${args}\` instead
+     - **Proceed anyway** — continue with plan generation using the spec as-is
+   - If there are no unanswered questions, proceed silently.
+4. Break down the implementation into logical phases and steps
+5. Identify technical decisions, dependencies, and risks
+6. Write the plan to \`osddt.plan.md\` in the working directory
 
 ## Plan Format
 

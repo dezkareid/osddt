@@ -40,4 +40,8 @@ describe('getClaudeTemplates', () => {
       expect(template).toBeDefined();
     }
   });
+
+  it('should produce a file named osddt.clarify.md', () => {
+    expect(templates.some((t) => t.filePath.endsWith('osddt.clarify.md'))).toBe(true);
+  });
 });

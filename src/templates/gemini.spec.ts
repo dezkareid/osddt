@@ -46,4 +46,8 @@ describe('getGeminiTemplates', () => {
       expect(template).toBeDefined();
     }
   });
+
+  it('should produce a file named osddt.clarify.toml', () => {
+    expect(templates.some((t) => t.filePath.endsWith('osddt.clarify.toml'))).toBe(true);
+  });
 });

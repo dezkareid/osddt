@@ -76,8 +76,8 @@ describe('WORKING_DIR_STEP', () => {
 });
 
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 8 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(8);
+  it('should define exactly 9 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(9);
   });
 
   it('should list commands with osddt.continue first, then peer entry points, then the rest of the workflow', () => {
@@ -87,6 +87,7 @@ describe('COMMAND_DEFINITIONS', () => {
       'osddt.research',
       'osddt.start',
       'osddt.spec',
+      'osddt.clarify',
       'osddt.plan',
       'osddt.tasks',
       'osddt.implement',
@@ -129,6 +130,12 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should report the file found and the command to run next', () => {
       expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('exact command the user should run next');
+    });
+
+    it('should recommend osddt.clarify when spec or plan phase has unanswered open questions', () => {
+      const body = cmd.body('$ARGUMENTS', 'npx osddt');
+      expect(body).toContain('/osddt.clarify $ARGUMENTS');
+      expect(body).toContain('unanswered open questions');
     });
   });
 
@@ -269,6 +276,47 @@ describe('COMMAND_DEFINITIONS', () => {
     });
   });
 
+  describe('osddt.clarify', () => {
+    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.clarify')!;
+
+    it('should have a description', () => {
+      expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include the repo preamble with the provided npx command', () => {
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain(getRepoPreamble('npx osddt'));
+      expect(cmd.body('$ARGUMENTS', 'npx @dezkareid/osddt')).toContain(getRepoPreamble('npx @dezkareid/osddt'));
+    });
+
+    it('should include the $ARGUMENTS placeholder in its body', () => {
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('$ARGUMENTS');
+    });
+
+    it('should instruct locating osddt.spec.md and stopping when absent', () => {
+      const body = cmd.body('$ARGUMENTS', 'npx osddt');
+      expect(body).toContain('osddt.spec.md');
+      expect(body).toContain('/osddt.spec $ARGUMENTS');
+    });
+
+    it('should instruct reading the Open Questions section', () => {
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('Open Questions');
+    });
+
+    it('should instruct reading the Decisions section to detect already-answered questions', () => {
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('Decisions');
+    });
+
+    it('should instruct writing decisions back to the Decisions section of osddt.spec.md', () => {
+      const body = cmd.body('$ARGUMENTS', 'npx osddt');
+      expect(body).toContain('Decisions');
+      expect(body).toContain('osddt.spec.md');
+    });
+
+    it('should prompt the user to run osddt.plan as the next step', () => {
+      expect(cmd.body('$ARGUMENTS', 'npx osddt')).toContain('/osddt.plan $ARGUMENTS');
+    });
+  });
+
   describe('osddt.plan', () => {
     const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.plan')!;
 
@@ -289,6 +337,14 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('Regenerate');
       expect(body).toContain('Update');
       expect(body).toContain('Do nothing');
+    });
+
+    it('should check for unanswered open questions and offer Clarify first or Proceed anyway', () => {
+      const body = cmd.body('$ARGUMENTS', 'npx osddt');
+      expect(body).toContain('unanswered open question');
+      expect(body).toContain('/osddt.clarify $ARGUMENTS');
+      expect(body).toContain('Clarify first');
+      expect(body).toContain('Proceed anyway');
     });
 
     it('should prompt the user to run osddt.tasks as the next step', () => {
