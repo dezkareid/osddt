@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/dezkareid/osddt/compare/osddt-v1.3.1...osddt-v1.3.2) (2026-02-24)
+
+
+### Bug Fixes
+
+* **spec:** remove technical details from spec command prompt ([eaf8a25](https://github.com/dezkareid/osddt/commit/eaf8a25225b17b3b82a3826f954f9ee54790bfb5))
+
 ## [1.3.1](https://github.com/dezkareid/osddt/compare/osddt-v1.3.0...osddt-v1.3.1) (2026-02-21)
 
 
