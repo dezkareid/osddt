@@ -239,7 +239,7 @@ osddt.start    ──┘
   1. Locates `osddt.spec.md` in `working-on/<feature-name>/`; if absent, suggests running `osddt.spec` first.
   2. Reads the **Open Questions** section and the **Decisions** section (if present) to determine which questions are already answered.
   3. Informs the user of any already-resolved questions and only asks the remaining unanswered ones.
-  4. Records all new answers in a `## Decisions` section of `osddt.spec.md` (the Open Questions section is left unchanged).
+  4. Records all new answers in a `## Decisions` section of `osddt.spec.md` and removes each answered question from the **Open Questions** section (removing the section heading too if it becomes empty).
   5. Always prompts the user to run (or re-run) `osddt.plan` to reflect the updated decisions.
 
 #### osddt.done behaviour
