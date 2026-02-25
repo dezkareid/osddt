@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/dezkareid/osddt/compare/osddt-v1.4.0...osddt-v1.5.0) (2026-02-25)
+
+
+### Features
+
+* **clarify:** remove answered questions from Open Questions section ([fb0c0c6](https://github.com/dezkareid/osddt/commit/fb0c0c6f89b5383dd18d26139e10fbec8c674761))
+
 # [1.4.0](https://github.com/dezkareid/osddt/compare/osddt-v1.3.2...osddt-v1.4.0) (2026-02-24)
 
 
