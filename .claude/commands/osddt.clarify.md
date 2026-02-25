@@ -17,11 +17,12 @@ description: "Resolve open questions in the spec and record decisions"
 4. For each **unanswered** question (in order), present it to the user and collect a response.
    - If all questions were already answered, inform the user and skip to step 6.
 
-5. Update the **Decisions** section in `osddt.spec.md`:
+5. Update `osddt.spec.md`:
+   - Remove each answered question from the **Open Questions** section.
+   - If the **Open Questions** section becomes empty after removal, remove the section heading as well.
    - If a **Decisions** section already exists, append new entries to it (do not modify existing entries).
    - If no **Decisions** section exists, add one at the end of the file.
    - Each decision entry uses the format: `N. **<short question summary>**: <answer>`
-   - The **Open Questions** section is left unchanged.
 
 6. Inform the user that all questions are now resolved (or were already resolved). Then prompt them to run (or re-run) the plan step so it reflects the updated decisions:
 

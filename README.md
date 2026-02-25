@@ -32,14 +32,74 @@ npx @dezkareid/osddt setup --agents claude,gemini --repo-type single
 
 Run `npx @dezkareid/osddt setup` once to generate the agent command files.
 
-`osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. If you close the coding session, you should execute the `osddt.continue` command to resume the workflow.
+`osddt.research` and `osddt.start` are **peer entry points** — use whichever fits your situation. Both lead to `osddt.spec`. If you close the coding session, execute `osddt.continue` to resume the workflow.
+
+```mermaid
+flowchart LR
+    continue([osddt.continue])
+
+    subgraph entry[Entry points]
+        research([osddt.research])
+        start([osddt.start])
+    end
+
+    spec([osddt.spec])
+    clarify([osddt.clarify\noptional])
+    plan([osddt.plan])
+    tasks([osddt.tasks])
+    implement([osddt.implement])
+    done([osddt.done])
+
+    research --> spec
+    start --> spec
+    spec --> clarify
+    clarify --> plan
+    spec --> plan
+    plan --> tasks
+    tasks --> implement
+    implement --> done
+    done --> continue
+    continue -.resume.-> spec & plan & tasks & implement & done
+
+    note["⚠️ You can go back to any step,\nbut once osddt.done runs\nthe feature is finished."]
+    done --- note
+```
+
+### Example workflows
+
+#### Starting with research
 
 ```
-osddt.continue ──────────────────────────────────────────────────────────────────────────────────────┐
-                                                                                                      │
-osddt.research ──┐                                                                                    │
-                 ├──► osddt.spec → [osddt.clarify] → osddt.plan → osddt.tasks → osddt.implement → osddt.done ◄─┘
-osddt.start    ──┘
+/osddt.research add payment gateway
+/osddt.spec add-payment-gateway
+/osddt.clarify add-payment-gateway   # optional — resolve open questions
+/osddt.plan use Stripe SDK, REST endpoints, no webhooks
+/osddt.tasks
+/osddt.implement
+/osddt.done
+```
+
+#### Starting directly
+
+```
+/osddt.start add user profile page
+/osddt.spec add-user-profile-page
+/osddt.plan React with React Query, REST API
+/osddt.tasks
+/osddt.implement
+/osddt.done
+```
+
+#### Resuming after closing a session
+
+```
+# You closed your agent session and want to pick up where you left off:
+/osddt.continue add-payment-gateway
+# → detects osddt.plan.md exists and reports:
+#   "Planning phase complete. Run: /osddt.tasks"
+/osddt.tasks
+/osddt.implement
+/osddt.done
 ```
 
 | Template           | Description                                                        |
