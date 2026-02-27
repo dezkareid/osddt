@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/dezkareid/osddt/compare/osddt-v1.5.0...osddt-v1.6.0) (2026-02-27)
+
+
+### Features
+
+* **templates:** improve next step instructions for osddt.start and osddt.research ([c8ebcdb](https://github.com/dezkareid/osddt/commit/c8ebcdb52ee86ab145f35ba667d4f4f774efd6be))
+
 # [1.5.0](https://github.com/dezkareid/osddt/compare/osddt-v1.4.0...osddt-v1.5.0) (2026-02-25)
 
 
