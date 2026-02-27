@@ -4,10 +4,11 @@ description: "Analyze requirements and write a feature specification"
 
 ## Instructions
 
-1. Check whether `osddt.research.md` exists in the working directory.
-   - If it exists, read it and use its findings (key insights, constraints, open questions, codebase findings) as additional context when writing the specification.
-   - If it does not exist, proceed using only the requirements provided in $ARGUMENTS.
-2. Analyze the requirements provided in $ARGUMENTS
+1. Gather requirements from all available sources — combine them when multiple sources are present:
+   - **Arguments** ($ARGUMENTS): use as the primary description of the feature, if provided.
+   - **Conversation context**: consider any additional details, clarifications, or constraints discussed in the current session that are not captured in $ARGUMENTS.
+   - **Research file**: if `osddt.research.md` exists in the working directory, read it and incorporate its findings (key insights, constraints, open questions, codebase findings).
+2. Analyze the combined requirements
 3. Identify the core problem being solved
 4. Define the scope, user-facing constraints, and acceptance criteria
 5. Write the specification to `osddt.spec.md` in the working directory
@@ -24,6 +25,7 @@ The spec should include:
 - **Open Questions**: Ambiguities about desired behaviour or product decisions to resolve
 
 > If `osddt.research.md` was found, add a **Research Summary** section that briefly references the key insights and user-facing constraints it identified.
+> If additional context was gathered from the conversation session, add a **Session Context** section summarising any extra details, decisions, or constraints discussed beyond what was passed as arguments.
 
 ## Arguments
 
