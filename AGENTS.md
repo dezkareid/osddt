@@ -223,6 +223,9 @@ osddt.start    ──┘
   1. Checks for an existing branch — offers **Resume** (`git checkout`) or **Abort** if found, otherwise runs `git checkout -b <branch-name>`.
   2. Reads `.osddtrc` to resolve the project path (single vs monorepo).
   3. Checks for an existing `working-on/<feature-name>/` folder — offers **Resume** or **Abort** if found, otherwise creates it.
+  4. Reports the branch and working directory, then shows a context-aware next step:
+     - If input was a **human-readable description**: informs the user their description will be used as the starting point for the spec and suggests running `/osddt.spec` (with an optional-context note).
+     - If input was a **branch name** (or no arguments): prompts the user to run `/osddt.spec` with an optional-context note.
 
 #### osddt.research behaviour
 
@@ -231,6 +234,9 @@ osddt.start    ──┘
   1. Derives the feature name (subject to the 30-character limit).
   2. Checks for an existing `working-on/<feature-name>/` folder — offers **Resume** or **Abort** if found, otherwise creates it.
   3. Researches the topic (codebase exploration, external references) and writes `osddt.research.md`.
+  4. Shows a context-aware next step:
+     - If input was a **human-readable description**: informs the user their description will be used as the starting point for the spec and suggests running `/osddt.spec` (with an optional-context note).
+     - If input was a **branch name** (or no arguments): prompts the user to run `/osddt.spec` with an optional-context note.
 
 #### osddt.clarify behaviour
 

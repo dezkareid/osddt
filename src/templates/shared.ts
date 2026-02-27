@@ -73,6 +73,30 @@ Use the following logic to determine \`<feature-name>\`:
    - If there are **multiple folders**, present the list to the user and ask them to pick one.
    - If there are **no folders**, inform the user that no in-progress features were found and stop.`;
 
+export function getNextStepToSpec(args: ArgPlaceholder): string {
+  return `## Next Step
+
+- If ${args} was a **human-readable description** (not a branch name):
+
+  Your description will be used as the starting point for the spec. Run:
+
+  \`\`\`
+  /osddt.spec
+  \`\`\`
+
+  > You can append more details if you want the spec to capture additional context.
+
+- If ${args} was a **branch name** (or no arguments were provided):
+
+  Run the following command to write the feature specification:
+
+  \`\`\`
+  /osddt.spec <brief feature description, e.g. "add user authentication with JWT">
+  \`\`\`
+
+  > Add a short description of what you're building so the spec has the right starting point.`;
+}
+
 export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
 
 export interface CommandDefinitionContext {
@@ -155,13 +179,7 @@ The research file should include:
 
 ${args}
 
-## Next Step
-
-Run the following command to write the feature specification:
-
-\`\`\`
-/osddt.spec <brief description of the feature or topic researched>
-\`\`\`
+${getNextStepToSpec(args)}
 `,
   },
   {
@@ -201,13 +219,7 @@ Where \`<feature-name>\` is the last segment of the branch name (after the last 
 
 ${args}
 
-## Next Step
-
-Run the following command to write the feature specification:
-
-\`\`\`
-/osddt.spec <brief description of the feature being built>
-\`\`\`
+${getNextStepToSpec(args)}
 `,
   },
   {
@@ -215,10 +227,11 @@ Run the following command to write the feature specification:
     description: 'Analyze requirements and write a feature specification',
     body: ({ args }) => `## Instructions
 
-1. Check whether \`osddt.research.md\` exists in the working directory.
-   - If it exists, read it and use its findings (key insights, constraints, open questions, codebase findings) as additional context when writing the specification.
-   - If it does not exist, proceed using only the requirements provided in ${args}.
-2. Analyze the requirements provided in ${args}
+1. Gather requirements from all available sources — combine them when multiple sources are present:
+   - **Arguments** (${args}): use as the primary description of the feature, if provided.
+   - **Conversation context**: consider any additional details, clarifications, or constraints discussed in the current session that are not captured in ${args}.
+   - **Research file**: if \`osddt.research.md\` exists in the working directory, read it and incorporate its findings (key insights, constraints, open questions, codebase findings).
+2. Analyze the combined requirements
 3. Identify the core problem being solved
 4. Define the scope, user-facing constraints, and acceptance criteria
 5. Write the specification to \`osddt.spec.md\` in the working directory
@@ -235,6 +248,7 @@ The spec should include:
 - **Open Questions**: Ambiguities about desired behaviour or product decisions to resolve
 
 > If \`osddt.research.md\` was found, add a **Research Summary** section that briefly references the key insights and user-facing constraints it identified.
+> If additional context was gathered from the conversation session, add a **Session Context** section summarising any extra details, decisions, or constraints discussed beyond what was passed as arguments.
 
 ## Arguments
 

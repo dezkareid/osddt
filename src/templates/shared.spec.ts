@@ -4,6 +4,7 @@ import {
   FEATURE_NAME_RULES,
   WORKING_DIR_STEP,
   RESOLVE_FEATURE_NAME,
+  getNextStepToSpec,
   COMMAND_DEFINITIONS,
 } from './shared.js';
 
@@ -96,6 +97,25 @@ describe('RESOLVE_FEATURE_NAME', () => {
 
   it('should instruct stopping when no folders are found', () => {
     expect(RESOLVE_FEATURE_NAME).toContain('no in-progress features were found');
+  });
+});
+
+describe('getNextStepToSpec', () => {
+  it('should include the /osddt.spec command for both input types', () => {
+    expect(getNextStepToSpec('$ARGUMENTS')).toContain('/osddt.spec');
+  });
+
+  it('should acknowledge the description as a starting point for the description variant', () => {
+    expect(getNextStepToSpec('$ARGUMENTS')).toContain('starting point');
+  });
+
+  it('should show an example argument for the branch variant', () => {
+    expect(getNextStepToSpec('$ARGUMENTS')).toContain('e.g.');
+  });
+
+  it('should use the provided args placeholder in the conditional text', () => {
+    expect(getNextStepToSpec('$ARGUMENTS')).toContain('$ARGUMENTS');
+    expect(getNextStepToSpec('{{args}}')).toContain('{{args}}');
   });
 });
 
@@ -210,8 +230,9 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(WORKING_DIR_STEP);
     });
 
-    it('should prompt the user to run osddt.spec as the next step', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
+    it('should include the next step to spec in the body', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain(getNextStepToSpec('$ARGUMENTS'));
     });
   });
 
@@ -263,8 +284,9 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(WORKING_DIR_STEP);
     });
 
-    it('should prompt the user to run osddt.spec as the next step', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
+    it('should include the next step to spec in the body', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain(getNextStepToSpec('$ARGUMENTS'));
     });
   });
 
@@ -291,8 +313,8 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('key insights, constraints, open questions, codebase findings');
     });
 
-    it('should instruct proceeding without research when the file does not exist', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('does not exist, proceed');
+    it('should instruct incorporating research findings when the file exists', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('read it and incorporate its findings');
     });
 
     it('should instruct adding a Research Summary section when research was found', () => {
