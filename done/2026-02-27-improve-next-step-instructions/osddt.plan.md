@@ -2,56 +2,26 @@
 
 ## Architecture Overview
 
-`shared.ts` is the single source of truth for all command template content. Both `osddt.start` and `osddt.research` currently inline a conditional `## Next Step` block that exposes the branch-name vs. human-readable-description classification to the user.
+`shared.ts` is the single source of truth for all command template content. Both `osddt.start` and `osddt.research` previously inlined a conditional `## Next Step` block that exposed the branch-name vs. human-readable-description classification to the user.
 
-The refactor replaces the existing conditional with two cleaner exported helper strings — one per input-type variant — and wires them into both `body()` functions. The conditional logic stays in the template (the agent still branches on input type) but the user-facing text no longer mentions the classification. The same two variants are used by both `osddt.start` and `osddt.research`, keeping them consistent.
+The refactor introduces a `getNextStepToSpec(args: ArgPlaceholder): string` function in `shared.ts` that owns the entire `## Next Step` block. It takes the args placeholder so it works for both Claude (`$ARGUMENTS`) and Gemini (`{{args}}`), and returns a single conditional block — one `## Next Step` heading with two indented variants. Both `body()` functions call it with one line: `${getNextStepToSpec(args)}`.
 
-Additionally, `CLAUDE.md` (and `AGENTS.md` / `GEMINI.md`) are updated to document the new next step behaviour.
+Additionally, `CLAUDE.md` and `AGENTS.md` are updated to document the new next step behaviour.
 
 ## Implementation Phases
 
-### Phase 1 — Replace `NEXT_STEP_TO_SPEC` with two variant constants in `shared.ts`
+### Phase 1 — Add `getNextStepToSpec()` to `shared.ts`
 
-The current `NEXT_STEP_TO_SPEC` constant (added earlier in this branch) is replaced by two named constants:
+Add an exported function `getNextStepToSpec(args: ArgPlaceholder): string` that returns the full `## Next Step` block with two indented variants:
 
-- `NEXT_STEP_TO_SPEC_FROM_DESCRIPTION` — used when input was a human-readable description:
-  ```
-  ## Next Step
+- **Description variant**: acknowledges the input will be used as the starting point for the spec, shows `/osddt.spec` with no required argument.
+- **Branch variant**: prompts the user to run `/osddt.spec` with a brief feature description, includes an `e.g.` example to guide them.
 
-  Your description will be used as the starting point for the spec. Run:
-
-  ```
-  /osddt.spec
-  ```
-
-  > You can append more details if you want the spec to capture additional context.
-  ```
-
-- `NEXT_STEP_TO_SPEC_FROM_BRANCH` — used when input was a branch name or no arguments:
-  ```
-  ## Next Step
-
-  Run the following command to write the feature specification:
-
-  ```
-  /osddt.spec
-  ```
-
-  > You can optionally provide a brief description to give the spec more context.
-  ```
-
-Place both after `WORKING_DIR_STEP` / `RESOLVE_FEATURE_NAME`, before `COMMAND_DEFINITIONS`. Remove `NEXT_STEP_TO_SPEC`.
+Neither variant mentions "human-readable" or "branch name" to the user.
 
 ### Phase 2 — Update `osddt.research` body in `shared.ts`
 
-Replace the current `${NEXT_STEP_TO_SPEC}` reference with the conditional:
-
-```
-- If ${args} was a human-readable description → use NEXT_STEP_TO_SPEC_FROM_DESCRIPTION
-- If ${args} was a branch name or no arguments → use NEXT_STEP_TO_SPEC_FROM_BRANCH
-```
-
-The branching is expressed in template prose instructing the agent — not shown to the user.
+Replace the previous conditional next step block with `${getNextStepToSpec(args)}`.
 
 ### Phase 3 — Update `osddt.start` body in `shared.ts`
 
@@ -59,37 +29,37 @@ Same change as Phase 2, applied to `osddt.start`.
 
 ### Phase 4 — Update tests in `shared.spec.ts`
 
-- Remove the import and tests for `NEXT_STEP_TO_SPEC`.
-- Import and add `describe` blocks for both `NEXT_STEP_TO_SPEC_FROM_DESCRIPTION` and `NEXT_STEP_TO_SPEC_FROM_BRANCH`, each asserting:
+- Replace the two-constant imports with `getNextStepToSpec`.
+- Add a `describe('getNextStepToSpec', ...)` block asserting:
   - Contains `/osddt.spec`
-  - Does not contain `human-readable` or `branch name`
-  - Contains the appropriate tone marker (`starting point` / `optionally`)
-- Update `osddt.research` and `osddt.start` test cases to assert both variant strings appear in the body.
+  - Contains `starting point` (description variant)
+  - Contains `e.g.` (branch variant)
+  - Uses the provided args placeholder in the conditional text
+- Update `osddt.research` and `osddt.start` test cases to assert `getNextStepToSpec('$ARGUMENTS')` appears in the body.
 - Run `pnpm test` and confirm all tests pass.
 
 ### Phase 5 — Update documentation
 
-- Update the `osddt.start behaviour` and `osddt.research behaviour` sections in `CLAUDE.md` to describe the two next step variants.
-- Keep `AGENTS.md` and `GEMINI.md` in sync with the same changes.
+- Update the `osddt.start behaviour` and `osddt.research behaviour` sections in `CLAUDE.md` and `AGENTS.md` to describe the two next step variants.
 
 ### Phase 6 — Regenerate command files
 
 - Run `pnpm build && node dist/index.js setup --agents claude,gemini --repo-type single` to regenerate all command files.
-- Verify `.claude/commands/osddt.start.md` and `.claude/commands/osddt.research.md` contain the updated conditional next step text with no user-facing classification language.
+- Verify `.claude/commands/osddt.start.md` and `.claude/commands/osddt.research.md` contain a single `## Next Step` heading with two properly indented variants and no user-facing classification language.
 
 ## Technical Dependencies
 
 - No new libraries or dependencies.
 - Source changes: `src/templates/shared.ts`, `src/templates/shared.spec.ts`.
-- Documentation changes: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`.
+- Documentation changes: `CLAUDE.md`, `AGENTS.md`.
 - Generated files updated via `osddt setup`.
 
 ## Risks & Mitigations
 
 - **Risk**: Template prose for the conditional is ambiguous and an agent misreads it.
-  - **Mitigation**: Write the conditional instruction clearly with explicit "if/else" structure in the template body.
+  - **Mitigation**: Use explicit if/else bullet structure in the template body.
 - **Risk**: Gemini TOML format may render the conditional differently.
-  - **Mitigation**: Both `claude.ts` and `gemini.ts` import from `shared.ts`; confirm the TOML output after regeneration.
+  - **Mitigation**: Both `claude.ts` and `gemini.ts` import from `shared.ts`; confirmed by inspecting the regenerated TOML output.
 
 ## Out of Scope
 
