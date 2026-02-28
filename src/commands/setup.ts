@@ -9,7 +9,7 @@ const CANONICAL_PACKAGE_NAME = '@dezkareid/osddt';
 const NPX_COMMAND = 'npx osddt';
 const NPX_COMMAND_FALLBACK = `npx ${CANONICAL_PACKAGE_NAME}`;
 
-async function resolveNpxCommand(cwd: string): Promise<string> {
+export async function resolveNpxCommand(cwd: string): Promise<string> {
   const pkgPath = path.join(cwd, 'package.json');
   try {
     const pkg = await fs.readJson(pkgPath) as { name?: string };

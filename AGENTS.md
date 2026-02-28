@@ -105,7 +105,8 @@ osddt/
 │   ├── commands/
 │   │   ├── setup.ts               # `osddt setup` — prompts for agents & repo type (or reads --agents/--repo-type flags), writes command files and .osddtrc
 │   │   ├── meta-info.ts           # `osddt meta-info` — outputs { branch, date } as JSON (consumed by generated templates)
-│   │   └── done.ts                # `osddt done <feature>` — moves working-on/<feature> → done/YYYY-MM-DD-<feature>
+│   │   ├── done.ts                # `osddt done <feature>` — moves working-on/<feature> → done/YYYY-MM-DD-<feature>
+│   │   └── update.ts              # `osddt update` — reads .osddtrc and regenerates agent command files for detected agents
 │   ├── templates/
 │   │   ├── shared.ts              # REPO_PREAMBLE, FEATURE_NAME_RULES, WORKING_DIR_STEP, and COMMAND_DEFINITIONS array
 │   │   ├── claude.ts              # Formats COMMAND_DEFINITIONS as Markdown (.claude/commands/osddt.<name>.md)
@@ -154,6 +155,8 @@ When `osddt setup` is run, it reads the `name` field of `package.json` in the ta
 | `npx @dezkareid/osddt meta-info`                                     | External      | Output current branch and date as JSON                        |
 | `osddt done <feature-name> --dir <project-path>`                     | Local dev     | Move `working-on/<feature>` to `done/<feature>`               |
 | `npx @dezkareid/osddt done <feature-name> --dir <project-path>`      | External      | Move `working-on/<feature>` to `done/<feature>`               |
+| `osddt update`                                                       | Local dev     | Regenerate agent command files from the existing `.osddtrc`   |
+| `npx @dezkareid/osddt update`                                        | External      | Regenerate agent command files from the existing `.osddtrc`   |
 
 #### `osddt setup` options
 

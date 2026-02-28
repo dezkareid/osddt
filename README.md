@@ -9,6 +9,7 @@ Other spec driven development tool but for monorepo
 | `@dezkareid/osddt setup --agents <list> --repo-type <type>`          | Non-interactive setup (for CI/scripted environments)          |
 | `@dezkareid/osddt meta-info`                                         | Output current branch and date as JSON                        |
 | `@dezkareid/osddt done <feature-name> --dir <project-path>`          | Move `working-on/<feature>` to `done/<feature>`               |
+| `@dezkareid/osddt update`                                            | Regenerate agent command files from the existing `.osddtrc`   |
 
 ### `osddt setup` options
 
