@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/dezkareid/osddt/compare/osddt-v1.6.0...osddt-v1.7.0) (2026-02-28)
+
+
+### Features
+
+* **commands:** add osddt update command to regenerate agent files ([7105db7](https://github.com/dezkareid/osddt/commit/7105db7f58b48660708bafe719bec656b29576e1))
+* **commands:** persist agents in .osddtrc and infer on update ([dec6ad8](https://github.com/dezkareid/osddt/commit/dec6ad85dcfcaa1ecd961ee1bc9592627defdae8))
+
 # [1.6.0](https://github.com/dezkareid/osddt/compare/osddt-v1.5.0...osddt-v1.6.0) (2026-02-27)
 
 
