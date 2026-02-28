@@ -9,6 +9,7 @@ Other spec driven development tool but for monorepo
 | `@dezkareid/osddt setup --agents <list> --repo-type <type>`          | Non-interactive setup (for CI/scripted environments)          |
 | `@dezkareid/osddt meta-info`                                         | Output current branch and date as JSON                        |
 | `@dezkareid/osddt done <feature-name> --dir <project-path>`          | Move `working-on/<feature>` to `done/<feature>`               |
+| `@dezkareid/osddt update`                                            | Regenerate agent command files from the existing `.osddtrc`   |
 
 ### `osddt setup` options
 
@@ -19,6 +20,8 @@ Other spec driven development tool but for monorepo
 | `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
 
 Both flags are optional. Providing neither runs the fully interactive mode. Providing both skips all prompts.
+
+The selected agents are saved in `.osddtrc` alongside `repoType` so that `osddt update` can regenerate the correct files without prompting.
 
 ```bash
 # Interactive (default)

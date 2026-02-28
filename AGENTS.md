@@ -105,7 +105,8 @@ osddt/
 │   ├── commands/
 │   │   ├── setup.ts               # `osddt setup` — prompts for agents & repo type (or reads --agents/--repo-type flags), writes command files and .osddtrc
 │   │   ├── meta-info.ts           # `osddt meta-info` — outputs { branch, date } as JSON (consumed by generated templates)
-│   │   └── done.ts                # `osddt done <feature>` — moves working-on/<feature> → done/YYYY-MM-DD-<feature>
+│   │   ├── done.ts                # `osddt done <feature>` — moves working-on/<feature> → done/YYYY-MM-DD-<feature>
+│   │   └── update.ts              # `osddt update` — reads .osddtrc and regenerates agent command files for detected agents
 │   ├── templates/
 │   │   ├── shared.ts              # REPO_PREAMBLE, FEATURE_NAME_RULES, WORKING_DIR_STEP, and COMMAND_DEFINITIONS array
 │   │   ├── claude.ts              # Formats COMMAND_DEFINITIONS as Markdown (.claude/commands/osddt.<name>.md)
@@ -117,7 +118,7 @@ osddt/
 ├── tsconfig.json                  # TypeScript config
 ├── vitest.config.ts               # Vitest config
 ├── package.json                   # Package name: @dezkareid/osddt, bin: osddt → dist/index.js
-├── .osddtrc                       # Runtime config written by setup (repoType: "single" | "monorepo")
+├── .osddtrc                       # Runtime config written by setup (repoType: "single" | "monorepo", agents: ["claude", "gemini"])
 ├── AGENTS.md / CLAUDE.md / GEMINI.md  # Agent-specific instructions (kept in sync)
 └── README.md                      # Public-facing documentation
 ```
@@ -142,6 +143,8 @@ There are two contexts in which osddt commands are invoked:
 
 When `osddt setup` is run, it reads the `name` field of `package.json` in the target directory. If the name is `@dezkareid/osddt`, templates are written with `npx osddt`. Otherwise they fall back to `npx @dezkareid/osddt`. The resolution lives in `resolveNpxCommand()` in `src/commands/setup.ts`.
 
+The selected agents are saved in `.osddtrc` alongside `repoType`. When `osddt update` is run, if `.osddtrc` has no `agents` key, it scans each agent's command directory for any command files to infer the active agents and writes the result back into `.osddtrc`.
+
 #### Available commands
 
 | Command                                                              | Context       | Description                                                   |
@@ -154,6 +157,8 @@ When `osddt setup` is run, it reads the `name` field of `package.json` in the ta
 | `npx @dezkareid/osddt meta-info`                                     | External      | Output current branch and date as JSON                        |
 | `osddt done <feature-name> --dir <project-path>`                     | Local dev     | Move `working-on/<feature>` to `done/<feature>`               |
 | `npx @dezkareid/osddt done <feature-name> --dir <project-path>`      | External      | Move `working-on/<feature>` to `done/<feature>`               |
+| `osddt update`                                                       | Local dev     | Regenerate agent command files from the existing `.osddtrc`   |
+| `npx @dezkareid/osddt update`                                        | External      | Regenerate agent command files from the existing `.osddtrc`   |
 
 #### `osddt setup` options
 
