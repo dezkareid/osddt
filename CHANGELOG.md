@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/dezkareid/osddt/compare/osddt-v1.7.0...osddt-v1.8.0) (2026-02-28)
+
+
+### Features
+
+* **templates:** prompt clarify after spec if open questions exist ([63c1483](https://github.com/dezkareid/osddt/commit/63c1483f0a03a4afc88a52f19122fd9b23a0579f))
+
 # [1.7.0](https://github.com/dezkareid/osddt/compare/osddt-v1.6.0...osddt-v1.7.0) (2026-02-28)
 
 
