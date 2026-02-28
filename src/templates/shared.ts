@@ -235,6 +235,9 @@ ${getNextStepToSpec(args)}
 3. Identify the core problem being solved
 4. Define the scope, user-facing constraints, and acceptance criteria
 5. Write the specification to \`osddt.spec.md\` in the working directory
+6. After writing the spec, check whether the **Open Questions** section contains any items:
+   - If it does, inform the user: "I have some open questions — can we clarify these? You can answer them now, or run \`/osddt.clarify\` to go through them one by one."
+   - If it does not (or the section is absent), proceed to the Next Step without mentioning clarification.
 
 ## Specification Format
 
