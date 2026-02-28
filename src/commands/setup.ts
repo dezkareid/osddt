@@ -27,6 +27,7 @@ interface CommandFile {
 
 interface OsddtConfig {
   repoType: RepoType;
+  agents: AgentType[];
 }
 
 interface SetupOptions {
@@ -103,7 +104,7 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): 
     console.log('');
   }
 
-  await writeConfig(cwd, { repoType });
+  await writeConfig(cwd, { repoType, agents });
 
   console.log('\nSetup complete!');
   console.log('Commands created: osddt.spec, osddt.plan, osddt.tasks, osddt.implement');

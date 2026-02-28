@@ -40,7 +40,7 @@ describe('setup command', () => {
       expect(getClaudeTemplates).toHaveBeenCalledWith('/tmp/project', 'npx osddt');
       expect(fs.writeJson).toHaveBeenCalledWith(
         expect.stringContaining('.osddtrc'),
-        { repoType: 'single' },
+        { repoType: 'single', agents: ['claude'] },
         { spaces: 2 },
       );
     });
@@ -66,7 +66,7 @@ describe('setup command', () => {
       expect(getGeminiTemplates).toHaveBeenCalledWith('/tmp/project', 'npx osddt');
       expect(fs.writeJson).toHaveBeenCalledWith(
         expect.stringContaining('.osddtrc'),
-        { repoType: 'monorepo' },
+        { repoType: 'monorepo', agents: ['claude', 'gemini'] },
         { spaces: 2 },
       );
     });

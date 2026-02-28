@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
 import { resolveNpxCommand } from './setup.js';
+import type { AgentType } from '../utils/prompt.js';
 
 interface UpdateOptions {
   dir: string;
@@ -12,6 +13,38 @@ interface UpdateOptions {
 interface CommandFile {
   filePath: string;
   content: string;
+}
+
+interface OsddtConfig {
+  repoType: string;
+  agents?: AgentType[];
+}
+
+interface AgentConfig {
+  dir: string[];
+  filePattern: RegExp;
+}
+
+const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
+  claude: { dir: ['.claude', 'commands'], filePattern: /^osddt\..+\.md$/ },
+  gemini: { dir: ['.gemini', 'commands'], filePattern: /^osddt\..+\.toml$/ },
+};
+
+async function hasOsddtCommandFile(dir: string, pattern: RegExp): Promise<boolean> {
+  if (!(await fs.pathExists(dir))) return false;
+  const entries = await fs.readdir(dir);
+  return entries.some((f) => pattern.test(f));
+}
+
+async function inferAgents(cwd: string): Promise<AgentType[]> {
+  const detected: AgentType[] = [];
+  for (const [agent, config] of Object.entries(AGENT_CONFIGS) as [AgentType, AgentConfig][]) {
+    const dir = path.join(cwd, ...config.dir);
+    if (await hasOsddtCommandFile(dir, config.filePattern)) {
+      detected.push(agent);
+    }
+  }
+  return detected;
 }
 
 async function writeCommandFile(file: CommandFile): Promise<void> {
@@ -27,22 +60,24 @@ async function runUpdate(cwd: string): Promise<void> {
     process.exit(1);
   }
 
+  const config = await fs.readJson(configPath) as OsddtConfig;
   const npxCommand = await resolveNpxCommand(cwd);
 
-  const claudeDir = path.join(cwd, '.claude', 'commands');
-  const geminiDir = path.join(cwd, '.gemini', 'commands');
+  let agents = config.agents;
 
-  const hasClaude = await fs.pathExists(claudeDir);
-  const hasGemini = await fs.pathExists(geminiDir);
-
-  if (!hasClaude && !hasGemini) {
-    console.error('Error: No agent command directories found. Run `osddt setup` first.');
-    process.exit(1);
+  if (!agents || agents.length === 0) {
+    agents = await inferAgents(cwd);
+    if (agents.length === 0) {
+      console.error('Error: No agent command directories found. Run `osddt setup` first.');
+      process.exit(1);
+    }
+    await fs.writeJson(configPath, { ...config, agents }, { spaces: 2 });
+    console.log(`Inferred agents from command directories and saved to .osddtrc: ${agents.join(', ')}\n`);
   }
 
   console.log('Updating OSDDT command files...\n');
 
-  if (hasClaude) {
+  if (agents.includes('claude')) {
     const claudeFiles = getClaudeTemplates(cwd, npxCommand);
     console.log('Claude Code commands (.claude/commands/):');
     for (const file of claudeFiles) {
@@ -51,7 +86,7 @@ async function runUpdate(cwd: string): Promise<void> {
     console.log('');
   }
 
-  if (hasGemini) {
+  if (agents.includes('gemini')) {
     const geminiFiles = getGeminiTemplates(cwd, npxCommand);
     console.log('Gemini CLI commands (.gemini/commands/):');
     for (const file of geminiFiles) {

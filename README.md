@@ -21,6 +21,8 @@ Other spec driven development tool but for monorepo
 
 Both flags are optional. Providing neither runs the fully interactive mode. Providing both skips all prompts.
 
+The selected agents are saved in `.osddtrc` alongside `repoType` so that `osddt update` can regenerate the correct files without prompting.
+
 ```bash
 # Interactive (default)
 npx @dezkareid/osddt setup

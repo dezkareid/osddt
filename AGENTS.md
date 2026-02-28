@@ -118,7 +118,7 @@ osddt/
 ├── tsconfig.json                  # TypeScript config
 ├── vitest.config.ts               # Vitest config
 ├── package.json                   # Package name: @dezkareid/osddt, bin: osddt → dist/index.js
-├── .osddtrc                       # Runtime config written by setup (repoType: "single" | "monorepo")
+├── .osddtrc                       # Runtime config written by setup (repoType: "single" | "monorepo", agents: ["claude", "gemini"])
 ├── AGENTS.md / CLAUDE.md / GEMINI.md  # Agent-specific instructions (kept in sync)
 └── README.md                      # Public-facing documentation
 ```
@@ -142,6 +142,8 @@ There are two contexts in which osddt commands are invoked:
 | **External project** (using osddt as a dependency) | `npx @dezkareid/osddt` | Running from a project that lists `@dezkareid/osddt` as a dependency |
 
 When `osddt setup` is run, it reads the `name` field of `package.json` in the target directory. If the name is `@dezkareid/osddt`, templates are written with `npx osddt`. Otherwise they fall back to `npx @dezkareid/osddt`. The resolution lives in `resolveNpxCommand()` in `src/commands/setup.ts`.
+
+The selected agents are saved in `.osddtrc` alongside `repoType`. When `osddt update` is run, if `.osddtrc` has no `agents` key, it scans each agent's command directory for any command files to infer the active agents and writes the result back into `.osddtrc`.
 
 #### Available commands
 
