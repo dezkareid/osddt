@@ -411,6 +411,88 @@ Once all tasks are checked off, run the following command to mark the feature as
 `,
   },
   {
+    name: 'osddt.fast',
+    description: 'Bootstrap all planning artifacts (spec, plan, tasks) from a single description',
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
+
+The argument provided is: ${args}
+
+This command runs the full spec-driven setup sequence in one shot — branch creation, spec, plan, and task list — without pausing for user input. Follow each step below in order without asking the user for clarification or confirmation between steps.
+
+### Step 1 — Derive branch and feature name
+
+Determine the branch name from ${args}:
+
+1. If ${args} looks like a branch name (no spaces, kebab-case or slash-separated), use it as-is.
+2. Otherwise treat ${args} as a human-readable feature description, convert it to a feature name, and use the format \`feat/<derived-name>\` as the branch name.
+
+Apply the constraints below to the feature name (the segment after the last \`/\`):
+
+${FEATURE_NAME_RULES}
+
+### Step 2 — Create branch and working directory
+
+3. Check whether the branch already exists locally or remotely:
+   - If it **does not exist**, create and switch to it:
+     \`\`\`
+     git checkout -b <branch-name>
+     \`\`\`
+   - If it **already exists**, warn the user and ask whether to:
+     - **Resume** — switch to the existing branch (\`git checkout <branch-name>\`) and continue
+     - **Abort** — stop and do nothing
+
+4. ${WORKING_DIR_STEP}
+
+Where \`<feature-name>\` is the last segment of the branch name (after the last \`/\`, or the full branch name if no \`/\` is present).
+
+### Step 3 — Generate spec
+
+Write \`osddt.spec.md\` to the working directory. Base it entirely on ${args} and any codebase context you can gather. Do **not** ask the user any questions. If there are ambiguities, record them in an **Open Questions** section and continue.
+
+The spec must include:
+- **Overview**: What the feature is and why it is needed
+- **Requirements**: Functional requirements expressed as user-observable behaviours
+- **Scope**: In scope and out of scope in product terms
+- **Acceptance Criteria**: Clear, testable criteria from a user or business perspective
+- **Open Questions** (if any): Ambiguities to resolve later — do not block on these
+
+### Step 4 — Generate plan
+
+Write \`osddt.plan.md\` to the working directory. Derive all technical decisions from the spec and codebase inspection. Do **not** ask the user for input.
+
+The plan must include:
+- **Assumptions**: Document every technical decision made automatically (e.g. library choices, architecture patterns) so the user can review them before implementing
+- **Architecture Overview**: High-level design decisions
+- **Implementation Phases**: Ordered phases with goals
+- **Technical Dependencies**: Libraries, APIs, services needed
+- **Risks & Mitigations**: Known risks and mitigations
+- **Out of Scope**: What will not be built
+
+### Step 5 — Generate task list
+
+Write \`osddt.tasks.md\` to the working directory based on \`osddt.plan.md\`.
+
+The task list must include:
+- A checklist of tasks grouped by phase: \`- [ ] [S/M/L] Description\`
+- Dependencies between tasks noted where relevant
+- A Definition of Done per phase
+
+### Step 6 — Report
+
+Display the full contents of \`osddt.tasks.md\` to the user. Then prompt them to run:
+
+\`\`\`
+/osddt.implement
+\`\`\`
+
+> You can optionally run \`/osddt.clarify\` before implementing to resolve any Open Questions recorded in the spec.
+
+## Arguments
+
+${args}
+`,
+  },
+  {
     name: 'osddt.done',
     description: 'Mark a feature as done and move it from working-on to done',
     body: ({ npxCommand }) => `## Instructions
