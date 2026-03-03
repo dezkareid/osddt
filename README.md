@@ -44,6 +44,7 @@ flowchart LR
     subgraph entry[Entry points]
         research([osddt.research])
         start([osddt.start])
+        fast([osddt.fast])
     end
 
     spec([osddt.spec])
@@ -55,6 +56,7 @@ flowchart LR
 
     research --> spec
     start --> spec
+    fast --> implement
     spec --> clarify
     clarify --> plan
     spec --> plan
@@ -93,6 +95,17 @@ flowchart LR
 /osddt.done
 ```
 
+#### Fast mode (spec + plan + tasks in one shot)
+
+```
+/osddt.fast add payment gateway
+# → creates branch, writes spec, plan (with Assumptions), and task list automatically
+/osddt.implement
+/osddt.done
+```
+
+> Review the `## Assumptions` section of `osddt.plan.md` before implementing. Run `/osddt.clarify` if any Open Questions in the spec need resolving first.
+
 #### Resuming after closing a session
 
 ```
@@ -115,6 +128,7 @@ flowchart LR
 | `osddt.plan`       | Create a technical implementation plan from a specification        |
 | `osddt.tasks`      | Generate actionable tasks from an implementation plan              |
 | `osddt.implement`  | Execute tasks from the task list one by one                        |
+| `osddt.fast`       | Bootstrap all planning artifacts (spec, plan, tasks) in one shot   |
 | `osddt.done`       | Resolve project path, verify tasks, and move the feature to done   |
 
 Generated files are placed in:
