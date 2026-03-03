@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/dezkareid/osddt/compare/osddt-v1.8.0...osddt-v1.9.0) (2026-03-03)
+
+
+### Features
+
+* fast development command ([1e45cfc](https://github.com/dezkareid/osddt/commit/1e45cfc314f100c1a94cc69ff59bae5eaf556692))
+
 # [1.8.0](https://github.com/dezkareid/osddt/compare/osddt-v1.7.0...osddt-v1.8.0) (2026-02-28)
 
 
