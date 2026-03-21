@@ -85,6 +85,16 @@ Where `<feature-name>` is the last segment of the branch name (after the last `/
 
 5. Report the branch name and working directory that were created or resumed.
 
+## Custom Context
+
+Run the following command and, if it returns content, use it as additional context before proceeding:
+
+```
+npx osddt context start
+```
+
+If the command returns no output, skip this section and continue.
+
 ## Arguments
 
 $ARGUMENTS

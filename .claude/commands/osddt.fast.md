@@ -129,6 +129,16 @@ Display the full contents of `osddt.tasks.md` to the user. Then prompt them to r
 
 > You can optionally run `/osddt.clarify` before implementing to resolve any Open Questions recorded in the spec.
 
+## Custom Context
+
+Run the following command and, if it returns content, use it as additional context before proceeding:
+
+```
+npx osddt context fast
+```
+
+If the command returns no output, skip this section and continue.
+
 ## Arguments
 
 $ARGUMENTS
