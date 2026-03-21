@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/dezkareid/osddt/compare/osddt-v1.10.0...osddt-v1.10.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* set version in runtime ([be9526d](https://github.com/dezkareid/osddt/commit/be9526d86414910bc49fd0c9fa5b43f4a862a081))
+
 # [1.10.0](https://github.com/dezkareid/osddt/compare/osddt-v1.9.0...osddt-v1.10.0) (2026-03-21)
 
 
