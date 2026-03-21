@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/dezkareid/osddt/compare/osddt-v1.9.0...osddt-v1.10.0) (2026-03-21)
+
+
+### Features
+
+* allow add custom context to templates ([763aab0](https://github.com/dezkareid/osddt/commit/763aab0b3bd95776c7a173e81f2710d23f859db2))
+
 # [1.9.0](https://github.com/dezkareid/osddt/compare/osddt-v1.8.0...osddt-v1.9.0) (2026-03-03)
 
 
