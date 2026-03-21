@@ -5,6 +5,7 @@ import {
   WORKING_DIR_STEP,
   RESOLVE_FEATURE_NAME,
   getNextStepToSpec,
+  getCustomContextStep,
   COMMAND_DEFINITIONS,
 } from './shared.js';
 
@@ -100,6 +101,21 @@ describe('RESOLVE_FEATURE_NAME', () => {
   });
 });
 
+describe('getCustomContextStep', () => {
+  it('should include the npx command and context subcommand with the given name', () => {
+    expect(getCustomContextStep('npx osddt', 'plan')).toContain('npx osddt context plan');
+    expect(getCustomContextStep('npx @dezkareid/osddt', 'spec')).toContain('npx @dezkareid/osddt context spec');
+  });
+
+  it('should include the ## Custom Context heading', () => {
+    expect(getCustomContextStep('npx osddt', 'plan')).toContain('## Custom Context');
+  });
+
+  it('should instruct skipping when the command returns no output', () => {
+    expect(getCustomContextStep('npx osddt', 'plan')).toContain('no output');
+  });
+});
+
 describe('getNextStepToSpec', () => {
   it('should include the /osddt.spec command for both input types', () => {
     expect(getNextStepToSpec('$ARGUMENTS')).toContain('/osddt.spec');
@@ -186,6 +202,10 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('/osddt.clarify');
       expect(body).toContain('unanswered open questions');
     });
+
+    it('should include the custom context step for "continue"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context continue');
+    });
   });
 
   describe('osddt.research', () => {
@@ -234,6 +254,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should include the next step to spec in the body', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain(getNextStepToSpec('$ARGUMENTS'));
+    });
+
+    it('should include the custom context step for "research"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context research');
     });
   });
 
@@ -289,6 +313,10 @@ describe('COMMAND_DEFINITIONS', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain(getNextStepToSpec('$ARGUMENTS'));
     });
+
+    it('should include the custom context step for "start"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context start');
+    });
   });
 
   describe('osddt.spec', () => {
@@ -325,6 +353,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should prompt the user to run osddt.plan as the next step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.plan');
     });
+
+    it('should include the custom context step for "spec"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context spec');
+    });
   });
 
   describe('osddt.clarify', () => {
@@ -356,6 +388,10 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should prompt the user to run osddt.plan as the next step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.plan');
+    });
+
+    it('should include the custom context step for "clarify"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context clarify');
     });
   });
 
@@ -396,6 +432,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should prompt the user to run osddt.tasks as the next step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.tasks');
     });
+
+    it('should include the custom context step for "plan"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context plan');
+    });
   });
 
   describe('osddt.tasks', () => {
@@ -427,6 +467,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should prompt the user to run osddt.implement as the next step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.implement');
     });
+
+    it('should include the custom context step for "tasks"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context tasks');
+    });
   });
 
   describe('osddt.implement', () => {
@@ -447,6 +491,10 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should prompt the user to run osddt.done as the next step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.done');
+    });
+
+    it('should include the custom context step for "implement"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context implement');
     });
   });
 
@@ -503,6 +551,10 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should prompt the user to run osddt.implement after completion', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.implement');
     });
+
+    it('should include the custom context step for "fast"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context fast');
+    });
   });
 
   describe('osddt.done', () => {
@@ -521,6 +573,10 @@ describe('COMMAND_DEFINITIONS', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('YYYY-MM-DD');
       expect(body).toContain('YYYY-MM-DD-feature-a');
+    });
+
+    it('should include the custom context step for "done"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context done');
     });
   });
 });

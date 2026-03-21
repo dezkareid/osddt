@@ -97,6 +97,20 @@ export function getNextStepToSpec(args: ArgPlaceholder): string {
   > Add a short description of what you're building so the spec has the right starting point.`;
 }
 
+export function getCustomContextStep(npxCommand: string, commandName: string): string {
+  return `## Custom Context
+
+Run the following command and, if it returns content, use it as additional context before proceeding:
+
+\`\`\`
+${npxCommand} context ${commandName}
+\`\`\`
+
+If the command returns no output, skip this section and continue.
+
+`;
+}
+
 export type ArgPlaceholder = '$ARGUMENTS' | '{{args}}';
 
 export interface CommandDefinitionContext {
@@ -133,7 +147,7 @@ Report which file was found, which phase that corresponds to, and the exact comm
 
 > **Open Questions check**: After reporting the phase, if the detected phase is **Spec done** or **Planning done**, also check whether \`osddt.spec.md\` contains any unanswered open questions (items in the **Open Questions** section with no corresponding entry in the **Decisions** section). If unanswered questions exist, inform the user and recommend running \`/osddt.clarify <feature-name>\` before (or in addition to) the suggested next command.
 
-## Arguments
+${getCustomContextStep(npxCommand, 'continue')}## Arguments
 
 ${args}
 `,
@@ -175,7 +189,7 @@ The research file should include:
 - **Constraints & Risks**: Known limitations or risks uncovered during research
 - **Open Questions**: Ambiguities that the specification phase should resolve
 
-## Arguments
+${getCustomContextStep(npxCommand, 'research')}## Arguments
 
 ${args}
 
@@ -215,7 +229,7 @@ Where \`<feature-name>\` is the last segment of the branch name (after the last 
 
 5. Report the branch name and working directory that were created or resumed.
 
-## Arguments
+${getCustomContextStep(npxCommand, 'start')}## Arguments
 
 ${args}
 
@@ -225,7 +239,7 @@ ${getNextStepToSpec(args)}
   {
     name: 'osddt.spec',
     description: 'Analyze requirements and write a feature specification',
-    body: ({ args }) => `## Instructions
+    body: ({ args, npxCommand }) => `## Instructions
 
 1. Gather requirements from all available sources — combine them when multiple sources are present:
    - **Arguments** (${args}): use as the primary description of the feature, if provided.
@@ -253,7 +267,7 @@ The spec should include:
 > If \`osddt.research.md\` was found, add a **Research Summary** section that briefly references the key insights and user-facing constraints it identified.
 > If additional context was gathered from the conversation session, add a **Session Context** section summarising any extra details, decisions, or constraints discussed beyond what was passed as arguments.
 
-## Arguments
+${getCustomContextStep(npxCommand, 'spec')}## Arguments
 
 ${args}
 
@@ -269,7 +283,7 @@ Run the following command to create the implementation plan:
   {
     name: 'osddt.clarify',
     description: 'Resolve open questions in the spec and record decisions',
-    body: () => `## Instructions
+    body: ({ npxCommand }) => `## Instructions
 
 1. Check whether \`osddt.spec.md\` exists in the working directory:
    - If it **does not exist**, inform the user that no spec was found and suggest running \`/osddt.spec <brief feature description>\` first. Stop here.
@@ -298,12 +312,13 @@ Run the following command to create the implementation plan:
 \`\`\`
 
 > Note: if \`osddt.plan.md\` already exists, the plan should be regenerated to incorporate the decisions.
-`,
+
+${getCustomContextStep(npxCommand, 'clarify')}`,
   },
   {
     name: 'osddt.plan',
     description: 'Create a technical implementation plan from a specification',
-    body: ({ args }) => `${RESOLVE_FEATURE_NAME}
+    body: ({ args, npxCommand }) => `${RESOLVE_FEATURE_NAME}
 
 ## Instructions
 
@@ -334,7 +349,7 @@ The plan should include:
 - **Risks & Mitigations**: Known risks and how to address them
 - **Out of Scope**: Explicitly what will not be built
 
-## Arguments
+${getCustomContextStep(npxCommand, 'plan')}## Arguments
 
 ${args}
 
@@ -350,7 +365,7 @@ Run the following command to generate the task list:
   {
     name: 'osddt.tasks',
     description: 'Generate actionable tasks from an implementation plan',
-    body: () => `${RESOLVE_FEATURE_NAME}
+    body: ({ npxCommand }) => `${RESOLVE_FEATURE_NAME}
 
 ## Instructions
 
@@ -372,7 +387,7 @@ The task list should include:
 - **Dependencies**: Note which tasks must complete before others
 - **Definition of Done**: Clear completion criteria per phase
 
-## Next Step
+${getCustomContextStep(npxCommand, 'tasks')}## Next Step
 
 Run the following command to start implementing tasks:
 
@@ -384,7 +399,7 @@ Run the following command to start implementing tasks:
   {
     name: 'osddt.implement',
     description: 'Execute tasks from the task list one by one',
-    body: () => `## Instructions
+    body: ({ npxCommand }) => `## Instructions
 
 1. Check whether \`osddt.tasks.md\` exists in the working directory:
    - If it **does not exist**, stop and ask the user to run \`/osddt.tasks\` first.
@@ -401,7 +416,7 @@ Run the following command to start implementing tasks:
 - Write tests for new functionality when applicable
 - Ask for clarification if requirements are ambiguous
 
-## Next Step
+${getCustomContextStep(npxCommand, 'implement')}## Next Step
 
 Once all tasks are checked off, run the following command to mark the feature as done:
 
@@ -487,7 +502,7 @@ Display the full contents of \`osddt.tasks.md\` to the user. Then prompt them to
 
 > You can optionally run \`/osddt.clarify\` before implementing to resolve any Open Questions recorded in the spec.
 
-## Arguments
+${getCustomContextStep(npxCommand, 'fast')}## Arguments
 
 ${args}
 `,
@@ -508,6 +523,7 @@ ${npxCommand} done <feature-name> --dir <project-path>
    For example, \`working-on/feature-a\` will be moved to \`done/YYYY-MM-DD-feature-a\`.
 
 3. Report the result of the command, including the full destination path
-`,
+
+${getCustomContextStep(npxCommand, 'done')}`,
   },
 ];
