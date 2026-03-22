@@ -17,7 +17,8 @@ async function runRead(name: string, cwd: string): Promise<void> {
   let content: string;
   try {
     content = await fs.readFile(filePath, 'utf-8');
-  } catch (err: unknown) {
+  }
+  catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       return;
     }
@@ -35,7 +36,8 @@ async function runInit(cwd: string): Promise<void> {
     const filePath = path.join(contextDir, `${name}.md`);
     if (await fs.pathExists(filePath)) {
       console.log(`  Skipped (exists): ${CONTEXT_DIR}/${name}.md`);
-    } else {
+    }
+    else {
       await fs.writeFile(filePath, stubContent(name), 'utf-8');
       console.log(`  Created: ${CONTEXT_DIR}/${name}.md`);
     }
@@ -54,9 +56,11 @@ export function contextCommand(): Command {
       const targetDir = path.resolve(options.dir);
       if (options.init) {
         await runInit(targetDir);
-      } else if (name) {
+      }
+      else if (name) {
         await runRead(name, targetDir);
-      } else {
+      }
+      else {
         cmd.help();
       }
     });

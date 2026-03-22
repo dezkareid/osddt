@@ -14,7 +14,8 @@ export async function resolveNpxCommand(cwd: string): Promise<string> {
   try {
     const pkg = await fs.readJson(pkgPath) as { name?: string };
     if (pkg.name === CANONICAL_PACKAGE_NAME) return NPX_COMMAND;
-  } catch {
+  }
+  catch {
     // no package.json or unreadable — fall through to default
   }
   return NPX_COMMAND_FALLBACK;
@@ -40,12 +41,12 @@ const VALID_AGENTS: AgentType[] = ['claude', 'gemini'];
 const VALID_REPO_TYPES: RepoType[] = ['single', 'monorepo'];
 
 function parseAgents(raw: string): AgentType[] {
-  const values = raw.split(',').map((s) => s.trim());
+  const values = raw.split(',').map(s => s.trim());
   if (values.length === 0) {
     console.error('Error: --agents requires at least one value.');
     process.exit(1);
   }
-  const invalid = values.filter((v) => !VALID_AGENTS.includes(v as AgentType));
+  const invalid = values.filter(v => !VALID_AGENTS.includes(v as AgentType));
   if (invalid.length > 0) {
     console.error(`Error: Invalid agent(s): ${invalid.join(', ')}. Valid values: ${VALID_AGENTS.join(', ')}.`);
     process.exit(1);
@@ -74,12 +75,12 @@ async function writeConfig(cwd: string, config: OsddtConfig): Promise<void> {
 }
 
 async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): Promise<void> {
-  const agents: AgentType[] =
-    rawAgents !== undefined ? parseAgents(rawAgents) : await askAgents();
+  const agents: AgentType[]
+    = rawAgents !== undefined ? parseAgents(rawAgents) : await askAgents();
   if (rawAgents === undefined) console.log('');
 
-  const repoType: RepoType =
-    rawRepoType !== undefined ? parseRepoType(rawRepoType) : await askRepoType();
+  const repoType: RepoType
+    = rawRepoType !== undefined ? parseRepoType(rawRepoType) : await askRepoType();
   if (rawRepoType === undefined) console.log('');
 
   const npxCommand = await resolveNpxCommand(cwd);

@@ -33,7 +33,7 @@ const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
 async function hasOsddtCommandFile(dir: string, pattern: RegExp): Promise<boolean> {
   if (!(await fs.pathExists(dir))) return false;
   const entries = await fs.readdir(dir);
-  return entries.some((f) => pattern.test(f));
+  return entries.some(f => pattern.test(f));
 }
 
 async function inferAgents(cwd: string): Promise<AgentType[]> {

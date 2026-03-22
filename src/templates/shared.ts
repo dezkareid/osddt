@@ -1,4 +1,3 @@
-
 export function getRepoPreamble(npxCommand: string): string {
   return `## Context
 
