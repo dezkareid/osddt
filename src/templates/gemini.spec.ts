@@ -37,19 +37,19 @@ describe('getGeminiTemplates', () => {
   it('should use {{args}} as the argument placeholder', () => {
     const noArgs = ['osddt.tasks.toml', 'osddt.implement.toml', 'osddt.done.toml', 'osddt.clarify.toml'];
     for (const t of templates) {
-      if (noArgs.some((name) => t.filePath.endsWith(name))) continue;
+      if (noArgs.some(name => t.filePath.endsWith(name))) continue;
       expect(t.content).toContain('{{args}}');
     }
   });
 
   it('should name files after the command', () => {
     for (const cmd of COMMAND_DEFINITIONS) {
-      const template = templates.find((t) => t.filePath.endsWith(`${cmd.name}.toml`));
+      const template = templates.find(t => t.filePath.endsWith(`${cmd.name}.toml`));
       expect(template).toBeDefined();
     }
   });
 
   it('should produce a file named osddt.clarify.toml', () => {
-    expect(templates.some((t) => t.filePath.endsWith('osddt.clarify.toml'))).toBe(true);
+    expect(templates.some(t => t.filePath.endsWith('osddt.clarify.toml'))).toBe(true);
   });
 });

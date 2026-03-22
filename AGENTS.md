@@ -82,7 +82,6 @@ Always prefer use exact versions for dependencies. Do not use `^` or `~`.
 
 #### Linting & Formatting
 - **ESLint**: `9.39.2`
-- **Prettier**: `3.8.1`
 
 #### Type Definitions
 - **@types/node**: `25.0.10`

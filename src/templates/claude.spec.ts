@@ -31,19 +31,19 @@ describe('getClaudeTemplates', () => {
   it('should use $ARGUMENTS as the argument placeholder', () => {
     const noArgs = ['osddt.tasks.md', 'osddt.implement.md', 'osddt.done.md', 'osddt.clarify.md'];
     for (const t of templates) {
-      if (noArgs.some((name) => t.filePath.endsWith(name))) continue;
+      if (noArgs.some(name => t.filePath.endsWith(name))) continue;
       expect(t.content).toContain('$ARGUMENTS');
     }
   });
 
   it('should name files after the command', () => {
     for (const cmd of COMMAND_DEFINITIONS) {
-      const template = templates.find((t) => t.filePath.endsWith(`${cmd.name}.md`));
+      const template = templates.find(t => t.filePath.endsWith(`${cmd.name}.md`));
       expect(template).toBeDefined();
     }
   });
 
   it('should produce a file named osddt.clarify.md', () => {
-    expect(templates.some((t) => t.filePath.endsWith('osddt.clarify.md'))).toBe(true);
+    expect(templates.some(t => t.filePath.endsWith('osddt.clarify.md'))).toBe(true);
   });
 });

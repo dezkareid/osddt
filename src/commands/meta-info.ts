@@ -4,7 +4,8 @@ import { execSync } from 'child_process';
 function getCurrentBranch(): string {
   try {
     return execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
-  } catch {
+  }
+  catch {
     return 'unknown';
   }
 }

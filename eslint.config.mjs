@@ -1,8 +1,8 @@
-import baseConfig from '@dezkareid/eslint-config-ts-base';
+import typescriptConfig from '@dezkareid/eslint-plugin-web/typescript';
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  ...baseConfig,
+  ...typescriptConfig,
   {
     rules: {
       '@typescript-eslint/no-unused-vars': [

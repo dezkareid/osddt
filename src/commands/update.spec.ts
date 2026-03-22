@@ -52,7 +52,7 @@ describe('update command', () => {
         });
         vi.mocked(fs.readJson)
           .mockResolvedValueOnce({ repoType: 'single', agents: ['claude'] }) // runUpdate → .osddtrc
-          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);                        // resolveNpxCommand → package.json
+          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
         vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
         vi.mocked(fs.writeFile).mockResolvedValue(undefined);
         vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -73,7 +73,7 @@ describe('update command', () => {
         });
         vi.mocked(fs.readJson)
           .mockResolvedValueOnce({ repoType: 'single', agents: ['gemini'] }) // runUpdate → .osddtrc
-          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);                        // resolveNpxCommand → package.json
+          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
         vi.mocked(getGeminiTemplates).mockReturnValue([GEMINI_FILE]);
         vi.mocked(fs.writeFile).mockResolvedValue(undefined);
         vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -94,7 +94,7 @@ describe('update command', () => {
         });
         vi.mocked(fs.readJson)
           .mockResolvedValueOnce({ repoType: 'single', agents: ['claude', 'gemini'] }) // runUpdate → .osddtrc
-          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);                                  // resolveNpxCommand → package.json
+          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
         vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
         vi.mocked(getGeminiTemplates).mockReturnValue([GEMINI_FILE]);
         vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -124,8 +124,8 @@ describe('update command', () => {
           return [] as never;
         });
         vi.mocked(fs.readJson)
-          .mockResolvedValueOnce({ repoType: 'single' })  // runUpdate → .osddtrc
-          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);     // resolveNpxCommand → package.json
+          .mockResolvedValueOnce({ repoType: 'single' }) // runUpdate → .osddtrc
+          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
         vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
         vi.mocked(fs.writeFile).mockResolvedValue(undefined);
         vi.mocked(fs.writeJson).mockResolvedValue(undefined);
@@ -157,8 +157,8 @@ describe('update command', () => {
           return [] as never;
         });
         vi.mocked(fs.readJson)
-          .mockResolvedValueOnce({ repoType: 'single' })  // runUpdate → .osddtrc
-          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);     // resolveNpxCommand → package.json
+          .mockResolvedValueOnce({ repoType: 'single' }) // runUpdate → .osddtrc
+          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
         vi.mocked(getGeminiTemplates).mockReturnValue([GEMINI_FILE]);
         vi.mocked(fs.writeFile).mockResolvedValue(undefined);
         vi.mocked(fs.writeJson).mockResolvedValue(undefined);
@@ -184,8 +184,8 @@ describe('update command', () => {
         });
         vi.mocked(fs.readdir).mockResolvedValue([] as never);
         vi.mocked(fs.readJson)
-          .mockResolvedValueOnce({ repoType: 'single' })  // runUpdate → .osddtrc
-          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);     // resolveNpxCommand → package.json
+          .mockResolvedValueOnce({ repoType: 'single' }) // runUpdate → .osddtrc
+          .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
         const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
           throw new Error('process.exit');
@@ -211,7 +211,7 @@ describe('update command', () => {
       });
       vi.mocked(fs.readJson)
         .mockResolvedValueOnce({ repoType: 'single', agents: ['claude'] }) // runUpdate → .osddtrc
-        .mockResolvedValueOnce(PACKAGE_JSON_OTHER);                        // resolveNpxCommand → package.json
+        .mockResolvedValueOnce(PACKAGE_JSON_OTHER); // resolveNpxCommand → package.json
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -230,7 +230,7 @@ describe('update command', () => {
       });
       vi.mocked(fs.readJson)
         .mockResolvedValueOnce({ repoType: 'single', agents: ['claude'] }) // runUpdate → .osddtrc
-        .mockResolvedValueOnce(PACKAGE_JSON_OSDDT);                        // resolveNpxCommand → package.json
+        .mockResolvedValueOnce(PACKAGE_JSON_OSDDT); // resolveNpxCommand → package.json
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.spyOn(console, 'log').mockImplementation(() => {});

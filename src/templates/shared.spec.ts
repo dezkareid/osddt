@@ -141,7 +141,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   it('should list commands with osddt.continue first, then peer entry points, then the rest of the workflow', () => {
-    const names = COMMAND_DEFINITIONS.map((c) => c.name);
+    const names = COMMAND_DEFINITIONS.map(c => c.name);
     expect(names).toEqual([
       'osddt.continue',
       'osddt.research',
@@ -157,7 +157,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.continue', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.continue')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.continue')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
@@ -209,7 +209,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.research', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.research')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.research')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
@@ -262,7 +262,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.start', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.start')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.start')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
@@ -320,7 +320,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.spec', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.spec')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.spec')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
@@ -360,7 +360,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.clarify', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.clarify')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.clarify')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
@@ -396,7 +396,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.plan', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.plan')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.plan')!;
 
     it('should include the feature name resolution step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(RESOLVE_FEATURE_NAME);
@@ -439,7 +439,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.tasks', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.tasks')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.tasks')!;
 
     it('should include the feature name resolution step', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(RESOLVE_FEATURE_NAME);
@@ -474,7 +474,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.implement', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.implement')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.implement')!;
 
     it('should instruct reading osddt.tasks.md', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.tasks.md');
@@ -483,7 +483,6 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should instruct stopping when osddt.tasks.md does not exist', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.tasks');
     });
-
 
     it('should instruct implementing one task at a time', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('one task at a time');
@@ -499,7 +498,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.fast', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.fast')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.fast')!;
 
     it('should have a description', () => {
       expect(cmd.description).toBeTruthy();
@@ -558,7 +557,7 @@ describe('COMMAND_DEFINITIONS', () => {
   });
 
   describe('osddt.done', () => {
-    const cmd = COMMAND_DEFINITIONS.find((c) => c.name === 'osddt.done')!;
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.done')!;
 
     it('should instruct verifying all tasks are checked off', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.tasks.md');
