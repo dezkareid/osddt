@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vite
 
 vi.mock('fs-extra');
 vi.mock('child_process');
+vi.mock('../utils/worktree.js');
 
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
+import { resolveBarePath, findWorktreeByFeature } from '../utils/worktree.js';
 import { doneCommand } from './done.js';
 
 const mockedExecSync = vi.mocked(execSync);
@@ -48,30 +50,19 @@ describe('done command', () => {
     });
   });
 
-  describe('given --worktree flag and a matching state file entry', () => {
+  describe('given --worktree flag and a matching worktree found via git worktree list', () => {
     beforeEach(() => {
-      mockedExecSync.mockImplementation((cmd: string) => {
-        if (cmd.includes('rev-parse --show-toplevel')) return '/home/user/myrepo\n';
-        return '';
-      });
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject-my-feature');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
-        if (String(p).endsWith('my-feature')) return true;
-        if (String(p).endsWith('.osddt-worktrees')) return true;
-        if (String(p).includes('myrepo-my-feature') && !String(p).includes('working-on')) return true;
+        const s = String(p);
+        if (s.endsWith('my-feature') && s.includes('working-on')) return true;
+        if (s === '/home/user/myproject-my-feature') return true;
         return false;
       });
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.move).mockResolvedValue(undefined);
-      vi.mocked(fs.readJson).mockResolvedValue([
-        {
-          featureName: 'my-feature',
-          branch: 'feat/my-feature',
-          worktreePath: '/home/user/myrepo-my-feature',
-          workingDir: '/home/user/myrepo-my-feature/working-on/my-feature',
-          repoRoot: '/home/user/myrepo',
-        },
-      ]);
-      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      mockedExecSync.mockReturnValue('');
     });
 
     it('should move the feature folder and run git worktree remove', async () => {
@@ -86,50 +77,28 @@ describe('done command', () => {
       );
       expect(mockedExecSync).toHaveBeenCalledWith(
         expect.stringContaining('git worktree remove'),
-        expect.any(Object),
+        expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
       );
       consoleSpy.mockRestore();
-    });
-
-    it('should remove the entry from .osddt-worktrees after cleanup', async () => {
-      vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const cmd = doneCommand();
-      await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
-
-      expect(fs.writeJson).toHaveBeenCalledWith(
-        expect.stringContaining('.osddt-worktrees'),
-        expect.not.arrayContaining([expect.objectContaining({ featureName: 'my-feature' })]),
-        expect.any(Object),
-      );
     });
   });
 
   describe('given --worktree flag but worktree path no longer exists on filesystem', () => {
     beforeEach(() => {
-      mockedExecSync.mockReturnValue('/home/user/myrepo\n');
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject-my-feature');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         const s = String(p);
-        if (s === '/home/user/myrepo-my-feature') return false; // worktree gone
-        if (s.endsWith('my-feature')) return true;
-        if (s.endsWith('.osddt-worktrees')) return true;
+        if (s === '/home/user/myproject-my-feature') return false;
+        if (s.endsWith('my-feature') && s.includes('working-on')) return true;
         return false;
       });
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.move).mockResolvedValue(undefined);
-      vi.mocked(fs.readJson).mockResolvedValue([
-        {
-          featureName: 'my-feature',
-          branch: 'feat/my-feature',
-          worktreePath: '/home/user/myrepo-my-feature',
-          workingDir: '/home/user/myrepo-my-feature/working-on/my-feature',
-          repoRoot: '/home/user/myrepo',
-        },
-      ]);
-      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      mockedExecSync.mockReturnValue('');
     });
 
-    it('should skip git worktree remove but still clean the state file', async () => {
+    it('should skip git worktree remove when path is gone', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const cmd = doneCommand();
@@ -139,12 +108,34 @@ describe('done command', () => {
         expect.stringContaining('git worktree remove'),
         expect.any(Object),
       );
-      expect(fs.writeJson).toHaveBeenCalledWith(
-        expect.stringContaining('.osddt-worktrees'),
-        expect.not.arrayContaining([expect.objectContaining({ featureName: 'my-feature' })]),
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('given --worktree flag but no worktree entry found', () => {
+    beforeEach(() => {
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue(undefined);
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        return String(p).includes('working-on');
+      });
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.move).mockResolvedValue(undefined);
+      mockedExecSync.mockReturnValue('');
+    });
+
+    it('should warn and skip worktree cleanup', async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const cmd = doneCommand();
+      await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
+
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('No worktree found'));
+      expect(mockedExecSync).not.toHaveBeenCalledWith(
+        expect.stringContaining('git worktree remove'),
         expect.any(Object),
       );
-      consoleSpy.mockRestore();
     });
   });
 

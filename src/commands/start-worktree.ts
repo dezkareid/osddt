@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
 import readline from 'readline';
+import { resolveBarePath, findWorktreeByFeature } from '../utils/worktree.js';
 
 export interface WorktreeEntry {
   featureName: string;
@@ -12,25 +13,8 @@ export interface WorktreeEntry {
   repoRoot: string;
 }
 
-function resolveRepoRoot(cwd: string): string {
-  return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
-}
-
 function repoName(repoRoot: string): string {
   return path.basename(repoRoot);
-}
-
-function stateFilePath(repoRoot: string): string {
-  return path.join(path.dirname(repoRoot), '.osddt-worktrees');
-}
-
-async function readStateFile(stateFile: string): Promise<WorktreeEntry[]> {
-  if (!(await fs.pathExists(stateFile))) return [];
-  return fs.readJson(stateFile) as Promise<WorktreeEntry[]>;
-}
-
-async function writeStateFile(stateFile: string, entries: WorktreeEntry[]): Promise<void> {
-  await fs.writeJson(stateFile, entries, { spaces: 2 });
 }
 
 function branchExists(branch: string, cwd: string): boolean {
@@ -66,6 +50,7 @@ async function prompt(question: string): Promise<string> {
 interface OsddtRc {
   repoType: 'single' | 'monorepo';
   worktreeBase?: string;
+  packageManager?: string;
 }
 
 async function createWorktree(branch: string, worktreePath: string, repoRoot: string): Promise<void> {
@@ -96,46 +81,53 @@ async function createWorktree(branch: string, worktreePath: string, repoRoot: st
   }
 }
 
+function runInstall(worktreePath: string, packageManager?: string): void {
+  if (!packageManager) {
+    console.log(`\n  ℹ No packageManager configured in .osddtrc — skipping install. Run it manually inside ${worktreePath}`);
+    return;
+  }
+  console.log(`\n  Running ${packageManager} install...`);
+  execSync(`${packageManager} install`, { cwd: worktreePath, stdio: 'inherit' });
+}
+
 async function runStartWorktree(featureName: string, options: { dir?: string }): Promise<void> {
   const cwd = process.cwd();
-  const repoRoot = resolveRepoRoot(cwd);
+  const repoRoot = await resolveBarePath(cwd);
   const branch = `feat/${featureName}`;
 
   // Read .osddtrc
-  const rcPath = path.join(repoRoot, '.osddtrc');
+  const rcPath = path.join(cwd, '.osddtrc');
   let rc: OsddtRc = { repoType: 'single' };
   if (await fs.pathExists(rcPath)) {
     rc = await fs.readJson(rcPath) as OsddtRc;
   }
 
-  // Resolve worktree path
-  const base = rc.worktreeBase ?? path.dirname(repoRoot);
-  const worktreePath = path.join(base, `${repoName(repoRoot)}-${featureName}`);
-
-  // Check state file for existing entry
-  const stateFile = stateFilePath(repoRoot);
-  const entries = await readStateFile(stateFile);
-  const existing = entries.find(e => e.featureName === featureName);
-
-  if (existing) {
-    console.log(`\nWorktree for "${featureName}" already exists at: ${existing.worktreePath}`);
+  // Check for existing worktree via git worktree list
+  const existingPath = findWorktreeByFeature(repoRoot, featureName);
+  if (existingPath) {
+    const workingDir = path.join(existingPath, 'working-on', featureName);
+    console.log(`\nWorktree for "${featureName}" already exists at: ${existingPath}`);
     const answer = await prompt('Resume or Abort? [R/a] ');
     if (answer.toLowerCase() === 'a') {
       console.log('Aborted.');
       process.exit(0);
     }
     console.log(`\nResuming existing worktree.`);
-    console.log(`  Branch:          ${existing.branch}`);
-    console.log(`  Worktree path:   ${existing.worktreePath}`);
-    console.log(`  Working dir:     ${existing.workingDir}`);
+    console.log(`  Branch:          ${branch}`);
+    console.log(`  Worktree path:   ${existingPath}`);
+    console.log(`  Working dir:     ${workingDir}`);
     return;
   }
+
+  // Resolve worktree path — sibling of repoRoot (i.e. sibling of .bare)
+  const base = rc['worktreeBase'] ?? path.dirname(repoRoot);
+  const worktreePath = path.join(base, `${repoName(repoRoot)}-${featureName}`);
 
   await createWorktree(branch, worktreePath, repoRoot);
 
   // Resolve working dir
   let projectPath: string;
-  if (rc.repoType === 'monorepo') {
+  if (rc['repoType'] === 'monorepo') {
     const pkg = options.dir ?? await prompt('Package path (e.g. packages/my-package): ');
     projectPath = path.join(worktreePath, pkg);
   }
@@ -146,9 +138,7 @@ async function runStartWorktree(featureName: string, options: { dir?: string }):
   const workingDir = path.join(projectPath, 'working-on', featureName);
   await fs.ensureDir(workingDir);
 
-  // Write state file entry
-  entries.push({ featureName, branch, worktreePath, workingDir, repoRoot });
-  await writeStateFile(stateFile, entries);
+  runInstall(worktreePath, rc['packageManager']);
 
   console.log(`\nWorktree feature started:`);
   console.log(`  Branch:          ${branch}`);

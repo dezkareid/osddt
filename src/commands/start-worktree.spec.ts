@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('fs-extra');
 vi.mock('child_process');
+vi.mock('../utils/worktree.js');
 
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
+import { resolveBarePath, findWorktreeByFeature } from '../utils/worktree.js';
 import { startWorktreeCommand } from './start-worktree.js';
 
 const mockedExecSync = vi.mocked(execSync);
@@ -12,28 +14,31 @@ const mockedExecSync = vi.mocked(execSync);
 describe('start-worktree command', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
-  describe('given a fresh feature with no existing branch or worktree', () => {
+  describe('given a fresh feature with no existing worktree (bare-path in .osddtrc)', () => {
     beforeEach(() => {
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue(undefined);
       mockedExecSync.mockImplementation((cmd: string) => {
-        if (cmd.includes('rev-parse --show-toplevel')) return '/home/user/myrepo\n' as unknown as Buffer;
         if (cmd.includes('rev-parse --verify')) throw new Error('branch not found');
         if (cmd.includes('ls-remote')) throw new Error('not found');
         return '' as unknown as Buffer;
       });
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
-        if (String(p).endsWith('.osddtrc')) return false;
-        if (String(p).endsWith('.osddt-worktrees')) return false;
-        if (String(p).endsWith('myrepo-my-feature')) return false;
+        if (String(p).endsWith('.osddtrc')) return true;
+        if (String(p).endsWith('.bare-my-feature')) return false;
         return false;
       });
-      vi.mocked(fs.readJson).mockResolvedValue([]);
+      vi.mocked(fs.readJson).mockResolvedValue({
+        repoType: 'single',
+        packageManager: 'pnpm',
+      });
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
-      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
     });
 
-    it('should create a new branch and worktree via git worktree add -b', async () => {
+    it('should create a new branch and worktree using barePath as cwd', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const cmd = startWorktreeCommand();
@@ -41,7 +46,7 @@ describe('start-worktree command', () => {
 
       expect(mockedExecSync).toHaveBeenCalledWith(
         expect.stringContaining('worktree add'),
-        expect.objectContaining({ cwd: '/home/user/myrepo' }),
+        expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
       );
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('feat/my-feature'));
     });
@@ -55,18 +60,15 @@ describe('start-worktree command', () => {
       expect(fs.ensureDir).toHaveBeenCalledWith(expect.stringContaining('working-on/my-feature'));
     });
 
-    it('should write an entry to the .osddt-worktrees state file', async () => {
+    it('should run package manager install after creating the worktree', async () => {
       vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
 
-      expect(fs.writeJson).toHaveBeenCalledWith(
-        expect.stringContaining('.osddt-worktrees'),
-        expect.arrayContaining([
-          expect.objectContaining({ featureName: 'my-feature', branch: 'feat/my-feature' }),
-        ]),
-        expect.any(Object),
+      expect(mockedExecSync).toHaveBeenCalledWith(
+        'pnpm install',
+        expect.objectContaining({ stdio: 'inherit' }),
       );
     });
 
@@ -82,20 +84,15 @@ describe('start-worktree command', () => {
     });
   });
 
-  describe('given a feature that already exists in the state file', () => {
+  describe('given a feature that already exists in git worktree list', () => {
     beforeEach(() => {
-      mockedExecSync.mockImplementation((cmd: string) => {
-        if (cmd.includes('rev-parse --show-toplevel')) return '/home/user/myrepo\n' as unknown as Buffer;
-        return '' as unknown as Buffer;
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject-my-feature');
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        if (String(p).endsWith('.osddtrc')) return false;
+        return true;
       });
-      vi.mocked(fs.pathExists).mockResolvedValue(true);
-      vi.mocked(fs.readJson).mockResolvedValue([{
-        featureName: 'my-feature',
-        branch: 'feat/my-feature',
-        worktreePath: '/home/user/myrepo-my-feature',
-        workingDir: '/home/user/myrepo-my-feature/working-on/my-feature',
-        repoRoot: '/home/user/myrepo',
-      }]);
+      vi.mocked(fs.readJson).mockResolvedValue({ repoType: 'single' });
     });
 
     it('should abort when the user chooses Abort on Resume prompt', async () => {
@@ -103,7 +100,6 @@ describe('start-worktree command', () => {
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });
-      // Mock readline to return 'a' (abort)
       vi.mock('readline', () => ({
         default: {
           createInterface: () => ({
@@ -120,6 +116,37 @@ describe('start-worktree command', () => {
 
       expect(exitSpy).toHaveBeenCalledWith(0);
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('given no packageManager in .osddtrc', () => {
+    beforeEach(() => {
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue(undefined);
+      mockedExecSync.mockImplementation((cmd: string) => {
+        if (cmd.includes('rev-parse --verify')) throw new Error('branch not found');
+        if (cmd.includes('ls-remote')) throw new Error('not found');
+        return '' as unknown as Buffer;
+      });
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        if (String(p).endsWith('.osddtrc')) return true;
+        return false;
+      });
+      vi.mocked(fs.readJson).mockResolvedValue({ repoType: 'single' });
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+    });
+
+    it('should skip install and print a reminder', async () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = startWorktreeCommand();
+      await cmd.parseAsync(['my-feature'], { from: 'user' });
+
+      const installCalls = mockedExecSync.mock.calls.filter(([cmd]) =>
+        typeof cmd === 'string' && cmd.includes('install') && !cmd.includes('git'),
+      );
+      expect(installCalls).toHaveLength(0);
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('skipping install'));
     });
   });
 });

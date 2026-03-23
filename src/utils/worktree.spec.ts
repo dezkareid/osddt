@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 vi.mock('fs-extra');
 vi.mock('child_process');
@@ -7,9 +7,9 @@ import fs from 'fs-extra';
 import { execSync } from 'child_process';
 import {
   checkGitVersion,
-  checkNotAWorktree,
   checkTargetWritable,
-  initStateFile,
+  resolveBarePath,
+  findWorktreeByFeature,
 } from './worktree.js';
 
 const mockedExecSync = vi.mocked(execSync);
@@ -42,96 +42,74 @@ describe('checkGitVersion', () => {
   });
 });
 
-describe('checkNotAWorktree', () => {
-  it('should pass when git-dir equals git-common-dir', () => {
-    mockedExecSync.mockImplementation((cmd: string) => {
-      if (cmd.includes('--git-common-dir')) return '.git\n' as unknown as Buffer;
-      if (cmd.includes('--git-dir')) return '.git\n' as unknown as Buffer;
-      return '' as unknown as Buffer;
-    });
-    const result = checkNotAWorktree('/some/repo');
-    expect(result.passed).toBe(true);
-  });
-
-  it('should fail when inside a worktree', () => {
-    mockedExecSync.mockImplementation((cmd: string) => {
-      if (cmd.includes('--git-common-dir')) return '/repo/.git\n' as unknown as Buffer;
-      if (cmd.includes('--git-dir')) return '/repo/.git/worktrees/feat\n' as unknown as Buffer;
-      return '' as unknown as Buffer;
-    });
-    const result = checkNotAWorktree('/some/worktree');
-    expect(result.passed).toBe(false);
-  });
-
-  it('should fail when not inside a git repository', () => {
-    mockedExecSync.mockImplementation(() => {
-      throw new Error('not a repo');
-    });
-    const result = checkNotAWorktree('/some/dir');
-    expect(result.passed).toBe(false);
-  });
-});
-
 describe('checkTargetWritable', () => {
-  beforeEach(() => {
-    mockedExecSync.mockImplementation((cmd: string) => {
-      if (cmd.includes('--show-toplevel')) return '/home/user/myrepo\n' as unknown as Buffer;
-      return '' as unknown as Buffer;
-    });
-  });
-
-  it('should pass when target base is writable and no .osddtrc exists', async () => {
-    vi.mocked(fs.pathExists).mockResolvedValue(false);
+  it('should pass when the parent of barePath is writable', async () => {
     vi.mocked(fs.access).mockResolvedValue(undefined);
-    const result = await checkTargetWritable('/home/user/myrepo');
+    const result = await checkTargetWritable('/home/user/myproject/.bare');
     expect(result.passed).toBe(true);
+    expect(result.detail).toContain('/home/user/myproject');
   });
 
-  it('should fail when target base is not writable', async () => {
-    vi.mocked(fs.pathExists).mockResolvedValue(false);
+  it('should fail when the parent of barePath is not writable', async () => {
     vi.mocked(fs.access).mockRejectedValue(new Error('EACCES'));
-    const result = await checkTargetWritable('/home/user/myrepo');
+    const result = await checkTargetWritable('/home/user/myproject/.bare');
     expect(result.passed).toBe(false);
-  });
-
-  it('should use worktreeBase from .osddtrc when present', async () => {
-    vi.mocked(fs.pathExists).mockResolvedValue(true as unknown as boolean);
-    vi.mocked(fs.readJson).mockResolvedValue({ worktreeBase: '/custom/base' });
-    vi.mocked(fs.access).mockResolvedValue(undefined);
-    const result = await checkTargetWritable('/home/user/myrepo');
-    expect(result.passed).toBe(true);
-    expect(result.detail).toContain('/custom/base');
+    expect(result.detail).toContain('/home/user/myproject');
   });
 });
 
-describe('initStateFile', () => {
-  beforeEach(() => {
-    mockedExecSync.mockImplementation((cmd: string) => {
-      if (cmd.includes('--show-toplevel')) return '/home/user/myrepo\n' as unknown as Buffer;
-      return '' as unknown as Buffer;
-    });
-  });
-
-  it('should create the state file when it does not exist', async () => {
-    vi.mocked(fs.pathExists).mockResolvedValue(false);
-    vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    await initStateFile('/home/user/myrepo');
-
-    expect(vi.mocked(fs.writeJson)).toHaveBeenCalledWith(
-      '/home/user/.osddt-worktrees',
-      [],
-      { spaces: 2 },
-    );
-  });
-
-  it('should not overwrite the state file when it already exists', async () => {
+describe('resolveBarePath', () => {
+  it('should return bare-path from .osddtrc when present', async () => {
     vi.mocked(fs.pathExists).mockResolvedValue(true as unknown as boolean);
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.mocked(fs.readJson).mockResolvedValue({ 'bare-path': '/home/user/myproject/.bare' });
+    const result = await resolveBarePath('/home/user/myproject');
+    expect(result).toBe('/home/user/myproject/.bare');
+    expect(mockedExecSync).not.toHaveBeenCalled();
+  });
 
-    await initStateFile('/home/user/myrepo');
+  it('should fall back to git rev-parse when .osddtrc has no bare-path', async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(true as unknown as boolean);
+    vi.mocked(fs.readJson).mockResolvedValue({ repoType: 'single' });
+    mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
+    const result = await resolveBarePath('/home/user/myrepo');
+    expect(result).toBe('/home/user/myrepo');
+  });
 
-    expect(vi.mocked(fs.writeJson)).not.toHaveBeenCalled();
+  it('should fall back to git rev-parse when .osddtrc does not exist', async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(false);
+    mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
+    const result = await resolveBarePath('/home/user/myrepo');
+    expect(result).toBe('/home/user/myrepo');
+  });
+});
+
+describe('findWorktreeByFeature', () => {
+  const PORCELAIN_OUTPUT = [
+    'worktree /home/user/myproject/.bare',
+    'HEAD abc123',
+    'branch refs/heads/main',
+    '',
+    'worktree /home/user/myproject-my-feature',
+    'HEAD def456',
+    'branch refs/heads/feat/my-feature',
+    '',
+  ].join('\n');
+
+  it('should return the worktree path matching the feature name', () => {
+    mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
+    const result = findWorktreeByFeature('/home/user/myproject/.bare', 'my-feature');
+    expect(result).toBe('/home/user/myproject-my-feature');
+  });
+
+  it('should return undefined when no worktree matches', () => {
+    mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
+    const result = findWorktreeByFeature('/home/user/myproject/.bare', 'unknown-feature');
+    expect(result).toBeUndefined();
+  });
+
+  it('should not match partial feature names', () => {
+    mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
+    const result = findWorktreeByFeature('/home/user/myproject/.bare', 'feature');
+    expect(result).toBeUndefined();
   });
 });
