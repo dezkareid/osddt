@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/dezkareid/osddt/compare/osddt-v1.10.1...osddt-v1.11.0) (2026-03-23)
+
+
+### Features
+
+* enable worktrees ([dc025fe](https://github.com/dezkareid/osddt/commit/dc025fe33f17d585b4b29417b1cebbd268c46411))
+
 ## [1.10.1](https://github.com/dezkareid/osddt/compare/osddt-v1.10.0...osddt-v1.10.1) (2026-03-21)
 
 
