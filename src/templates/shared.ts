@@ -131,6 +131,15 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
 
 ## Instructions
 
+Before checking the working directory, run the following command to check whether this feature uses a git worktree:
+
+\`\`\`
+${npxCommand} worktree-info <feature-name>
+\`\`\`
+
+- If it exits with code **0**: parse the JSON output and use the returned \`workingDir\` as \`<project-path>/working-on/<feature-name>\`. Skip the main-tree scan below.
+- If it exits with code **1**: the feature is not a worktree feature. Use the standard project path from \`.osddtrc\` and scan the main tree as usual.
+
 Check the working directory \`<project-path>/working-on/<feature-name>\` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
 | Condition | Current phase | Run next |
@@ -227,6 +236,45 @@ Once the branch name is determined:
 Where \`<feature-name>\` is the last segment of the branch name (after the last \`/\`, or the full branch name if no \`/\` is present).
 
 5. Report the branch name and working directory that were created or resumed.
+
+${getCustomContextStep(npxCommand, 'start')}## Arguments
+
+${args}
+
+${getNextStepToSpec(args)}
+`,
+  },
+  {
+    name: 'osddt.start-worktree',
+    description: 'Start a new feature using a git worktree for parallel development',
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
+
+The argument provided is: ${args}
+
+Determine the branch name using the following logic:
+
+1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`fix/some-bug\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), use it as-is.
+2. Otherwise treat ${args} as a human-readable feature description, convert it to a feature name, and use the format \`feat/<derived-name>\` as the branch name.
+
+Apply the constraints below to the feature name (the segment after the last \`/\`) before using it:
+
+${FEATURE_NAME_RULES}
+
+Once the branch name is determined:
+
+3. Run the following command to create the git worktree, scaffold the working directory, and register the feature in the state file:
+
+\`\`\`
+${npxCommand} start-worktree <feature-name>
+\`\`\`
+
+For monorepos, pass the package path:
+
+\`\`\`
+${npxCommand} start-worktree <feature-name> --dir <package-path>
+\`\`\`
+
+4. Report the branch name, worktree path, and working directory shown in the command output.
 
 ${getCustomContextStep(npxCommand, 'start')}## Arguments
 
@@ -512,16 +560,53 @@ ${args}
     body: ({ npxCommand }) => `## Instructions
 
 1. Confirm all tasks in \`osddt.tasks.md\` are checked off (\`- [x]\`)
-2. Run the following command to move the feature folder from \`working-on\` to \`done\`:
+2. Run the following command to check whether this feature uses a git worktree:
 
 \`\`\`
-${npxCommand} done <feature-name> --dir <project-path>
+${npxCommand} worktree-info <feature-name>
 \`\`\`
 
-   The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.
+3. Based on the result:
+
+   **If it exits with code 1 (standard feature):** use the project path from \`.osddtrc\`, then run:
+   \`\`\`
+   ${npxCommand} done <feature-name> --dir <project-path>
+   \`\`\`
+   Skip to step 8.
+
+   **If it exits with code 0 (worktree feature):** parse the JSON to get \`worktreePath\` and \`branch\`, derive \`<project-path>\` from \`workingDir\`, then continue below.
+
+4. Check for uncommitted changes inside the worktree:
+
+   \`\`\`
+   git -C <worktreePath> status --porcelain
+   \`\`\`
+
+5. If there are **uncommitted changes**:
+   1. Run \`git -C <worktreePath> diff\` to inspect them.
+   2. Derive a concise commit message in **conventional commit** format (e.g. \`feat: add payment gateway integration\`) based on the diff.
+   3. Present the proposed message to the user: _"Use this commit message, or provide your own?"_
+   4. Once confirmed, commit:
+      \`\`\`
+      git -C <worktreePath> add -A
+      git -C <worktreePath> commit -m "<confirmed-message>"
+      \`\`\`
+
+6. Push the branch to remote (covers both first push and subsequent pushes):
+
+   \`\`\`
+   git -C <worktreePath> push --set-upstream origin <branch>
+   \`\`\`
+
+7. Run the done command with the \`--worktree\` flag:
+   \`\`\`
+   ${npxCommand} done <feature-name> --dir <project-path> --worktree
+   \`\`\`
+
+8. The command will automatically prefix the destination folder name with today's date in \`YYYY-MM-DD\` format.
    For example, \`working-on/feature-a\` will be moved to \`done/YYYY-MM-DD-feature-a\`.
 
-3. Report the result of the command, including the full destination path
+9. Report the result of the command, including the full destination path
 
 ${getCustomContextStep(npxCommand, 'done')}`,
   },

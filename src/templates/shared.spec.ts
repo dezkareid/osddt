@@ -136,16 +136,17 @@ describe('getNextStepToSpec', () => {
 });
 
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 10 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(10);
+  it('should define exactly 11 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(11);
   });
 
-  it('should list commands with osddt.continue first, then peer entry points, then the rest of the workflow', () => {
+  it('should list commands with osddt.continue first, then entry points (including start-worktree), then the rest of the workflow', () => {
     const names = COMMAND_DEFINITIONS.map(c => c.name);
     expect(names).toEqual([
       'osddt.continue',
       'osddt.research',
       'osddt.start',
+      'osddt.start-worktree',
       'osddt.spec',
       'osddt.clarify',
       'osddt.plan',
@@ -205,6 +206,22 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should include the custom context step for "continue"', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context continue');
+    });
+
+    it('should instruct running worktree-info to resolve the working directory', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('npx osddt worktree-info');
+    });
+
+    it('should instruct using workingDir from worktree-info when exit code is 0', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('workingDir');
+      expect(body).toContain('exit');
+    });
+
+    it('should instruct falling back to main-tree scan when worktree-info exits with code 1', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('code **1**');
     });
   });
 
@@ -312,6 +329,39 @@ describe('COMMAND_DEFINITIONS', () => {
     it('should include the next step to spec in the body', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain(getNextStepToSpec('$ARGUMENTS'));
+    });
+
+    it('should include the custom context step for "start"', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context start');
+    });
+  });
+
+  describe('osddt.start-worktree', () => {
+    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.start-worktree')!;
+
+    it('should have a description', () => {
+      expect(cmd.description).toBeTruthy();
+    });
+
+    it('should include the repo preamble', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getRepoPreamble('npx osddt'));
+    });
+
+    it('should instruct calling the start-worktree CLI command', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('npx osddt start-worktree');
+    });
+
+    it('should include the --dir flag for monorepo usage', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('--dir');
+    });
+
+    it('should include the feature name rules', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Maximum length: 30 characters');
+    });
+
+    it('should include the next step to spec', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
     });
 
     it('should include the custom context step for "start"', () => {
@@ -561,6 +611,37 @@ describe('COMMAND_DEFINITIONS', () => {
 
     it('should instruct verifying all tasks are checked off', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('osddt.tasks.md');
+    });
+
+    it('should instruct running worktree-info to detect whether the feature uses a worktree', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('npx osddt worktree-info');
+    });
+
+    it('should instruct running done with --worktree when worktree-info exits with code 0', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('--worktree');
+    });
+
+    it('should instruct checking for uncommitted changes with git status --porcelain', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('git -C <worktreePath> status --porcelain');
+    });
+
+    it('should instruct running git diff and deriving a conventional commit message', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('git -C <worktreePath> diff');
+      expect(body).toContain('conventional commit');
+    });
+
+    it('should ask the user to confirm or provide their own commit message', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('Use this commit message, or provide your own');
+    });
+
+    it('should instruct pushing the branch with --set-upstream', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('git -C <worktreePath> push --set-upstream origin <branch>');
     });
 
     it('should instruct running the npx command with done and --dir', () => {
