@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/dezkareid/osddt/compare/osddt-v1.11.1...osddt-v1.11.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* setup worktree to clone bare ([bc2fb21](https://github.com/dezkareid/osddt/commit/bc2fb21e6022dc3144ece03b35878b3b00bbf6df))
+
 ## [1.11.1](https://github.com/dezkareid/osddt/compare/osddt-v1.11.0...osddt-v1.11.1) (2026-03-23)
 
 
