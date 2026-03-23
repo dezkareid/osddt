@@ -3,7 +3,8 @@ import path from 'path';
 import fs from 'fs-extra';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
-import { askRepoType, askAgents, type RepoType, type AgentType } from '../utils/prompt.js';
+import { askRepoType, askAgents, askWorktreeUrl, type RepoType, type AgentType } from '../utils/prompt.js';
+import { runWorktreeChecks, initStateFile } from '../utils/worktree.js';
 
 const CANONICAL_PACKAGE_NAME = '@dezkareid/osddt';
 const NPX_COMMAND = 'npx osddt';
@@ -27,14 +28,16 @@ interface CommandFile {
 }
 
 interface OsddtConfig {
-  repoType: RepoType;
-  agents: AgentType[];
+  'repoType': RepoType;
+  'agents': AgentType[];
+  'worktree-repository'?: string;
 }
 
 interface SetupOptions {
   dir: string;
   agents?: string;
   repoType?: string;
+  worktreeRepository?: string;
 }
 
 const VALID_AGENTS: AgentType[] = ['claude', 'gemini'];
@@ -74,19 +77,7 @@ async function writeConfig(cwd: string, config: OsddtConfig): Promise<void> {
   console.log(`\nSaved config: ${configPath}`);
 }
 
-async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): Promise<void> {
-  const agents: AgentType[]
-    = rawAgents !== undefined ? parseAgents(rawAgents) : await askAgents();
-  if (rawAgents === undefined) console.log('');
-
-  const repoType: RepoType
-    = rawRepoType !== undefined ? parseRepoType(rawRepoType) : await askRepoType();
-  if (rawRepoType === undefined) console.log('');
-
-  const npxCommand = await resolveNpxCommand(cwd);
-
-  console.log('Setting up OSDDT command files...\n');
-
+async function writeAgentFiles(cwd: string, agents: AgentType[], npxCommand: string): Promise<void> {
   if (agents.includes('claude')) {
     const claudeFiles = getClaudeTemplates(cwd, npxCommand);
     console.log('Claude Code commands (.claude/commands/):');
@@ -104,8 +95,45 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string): 
     }
     console.log('');
   }
+}
 
-  await writeConfig(cwd, { repoType, agents });
+async function setupWorktreeEnvironment(cwd: string, _worktreeRepository: string): Promise<void> {
+  console.log('Checking environment for git worktree support...\n');
+  const allPassed = await runWorktreeChecks(cwd);
+  console.log('');
+  if (!allPassed) {
+    console.log('Some checks failed. Resolve the issues above before using the worktree workflow.');
+    process.exit(1);
+  }
+  await initStateFile(cwd);
+  console.log('');
+}
+
+async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, rawWorktreeRepository?: string): Promise<void> {
+  const agents: AgentType[]
+    = rawAgents !== undefined ? parseAgents(rawAgents) : await askAgents();
+  if (rawAgents === undefined) console.log('');
+
+  const repoType: RepoType
+    = rawRepoType !== undefined ? parseRepoType(rawRepoType) : await askRepoType();
+  if (rawRepoType === undefined) console.log('');
+
+  const worktreeRepository: string | undefined
+    = rawWorktreeRepository !== undefined ? rawWorktreeRepository : (await askWorktreeUrl()) || undefined;
+  if (rawWorktreeRepository === undefined) console.log('');
+
+  if (worktreeRepository) {
+    await setupWorktreeEnvironment(cwd, worktreeRepository);
+  }
+
+  const npxCommand = await resolveNpxCommand(cwd);
+
+  console.log('Setting up OSDDT command files...\n');
+  await writeAgentFiles(cwd, agents, npxCommand);
+
+  const config: OsddtConfig = { repoType, agents };
+  if (worktreeRepository) config['worktree-repository'] = worktreeRepository;
+  await writeConfig(cwd, config);
 
   console.log('\nSetup complete!');
   console.log('Commands created: osddt.spec, osddt.plan, osddt.tasks, osddt.implement');
@@ -119,9 +147,10 @@ export function setupCommand(): Command {
     .option('-d, --dir <directory>', 'target directory', process.cwd())
     .option('--agents <list>', 'comma-separated agents to set up (claude, gemini)')
     .option('--repo-type <type>', 'repository type (single, monorepo)')
+    .option('--worktree-repository <url>', 'remote repository URL to enable worktree workflow')
     .action(async (options: SetupOptions) => {
       const targetDir = path.resolve(options.dir);
-      await runSetup(targetDir, options.agents, options.repoType);
+      await runSetup(targetDir, options.agents, options.repoType, options.worktreeRepository);
     });
 
   return cmd;

@@ -1,18 +1,16 @@
-import { Command } from 'commander';
 import path from 'path';
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
 
-interface CheckResult {
+export interface CheckResult {
   label: string;
   passed: boolean;
   detail: string;
 }
 
-function checkGitVersion(): CheckResult {
+export function checkGitVersion(): CheckResult {
   try {
     const output = execSync('git --version', { encoding: 'utf-8' }).trim();
-    // e.g. "git version 2.39.3"
     const match = output.match(/git version (\d+)\.(\d+)/);
     if (!match) {
       return { label: 'Git version >= 2.5', passed: false, detail: `Could not parse git version: ${output}` };
@@ -31,7 +29,7 @@ function checkGitVersion(): CheckResult {
   }
 }
 
-function checkNotAWorktree(cwd: string): CheckResult {
+export function checkNotAWorktree(cwd: string): CheckResult {
   try {
     const gitCommonDir = execSync('git rev-parse --git-common-dir', { cwd, encoding: 'utf-8' }).trim();
     const gitDir = execSync('git rev-parse --git-dir', { cwd, encoding: 'utf-8' }).trim();
@@ -40,7 +38,7 @@ function checkNotAWorktree(cwd: string): CheckResult {
       label: 'Current directory is not a worktree',
       passed: !isWorktree,
       detail: isWorktree
-        ? `This directory is itself a worktree (git-dir: ${gitDir}). Run setup-worktree from the main repository.`
+        ? `This directory is itself a worktree (git-dir: ${gitDir}). Run setup from the main repository.`
         : 'OK',
     };
   }
@@ -49,7 +47,7 @@ function checkNotAWorktree(cwd: string): CheckResult {
   }
 }
 
-async function checkTargetWritable(cwd: string): Promise<CheckResult> {
+export async function checkTargetWritable(cwd: string): Promise<CheckResult> {
   let targetBase: string;
   try {
     const repoRoot = execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
@@ -75,7 +73,24 @@ async function checkTargetWritable(cwd: string): Promise<CheckResult> {
   }
 }
 
-function printResult(result: CheckResult): void {
+export async function initStateFile(cwd: string): Promise<void> {
+  try {
+    const repoRoot = execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
+    const stateFile = path.join(path.dirname(repoRoot), '.osddt-worktrees');
+    if (!(await fs.pathExists(stateFile))) {
+      await fs.writeJson(stateFile, [], { spaces: 2 });
+      console.log(`  ✓ Initialized worktree state file: ${stateFile}`);
+    }
+    else {
+      console.log(`  ✓ Worktree state file already exists: ${stateFile}`);
+    }
+  }
+  catch {
+    console.log('  ✗ Could not initialize worktree state file');
+  }
+}
+
+export function printCheckResult(result: CheckResult): void {
   const icon = result.passed ? '✓' : '✗';
   console.log(`  ${icon} ${result.label}`);
   if (!result.passed) {
@@ -83,9 +98,7 @@ function printResult(result: CheckResult): void {
   }
 }
 
-async function runSetupWorktree(cwd: string): Promise<void> {
-  console.log('Checking environment for git worktree support...\n');
-
+export async function runWorktreeChecks(cwd: string): Promise<boolean> {
   const results: CheckResult[] = [
     checkGitVersion(),
     checkNotAWorktree(cwd),
@@ -93,29 +106,8 @@ async function runSetupWorktree(cwd: string): Promise<void> {
   ];
 
   for (const result of results) {
-    printResult(result);
+    printCheckResult(result);
   }
 
-  const allPassed = results.every(r => r.passed);
-  console.log('');
-  if (allPassed) {
-    console.log('All checks passed. You can use the worktree workflow.');
-  }
-  else {
-    console.log('Some checks failed. Resolve the issues above before using the worktree workflow.');
-    process.exit(1);
-  }
-}
-
-export function setupWorktreeCommand(): Command {
-  const cmd = new Command('setup-worktree');
-
-  cmd
-    .description('Validate the environment for git worktree usage')
-    .option('-d, --dir <directory>', 'directory to check', process.cwd())
-    .action(async (options: { dir: string }) => {
-      await runSetupWorktree(path.resolve(options.dir));
-    });
-
-  return cmd;
+  return results.every(r => r.passed);
 }

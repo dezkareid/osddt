@@ -1,5 +1,6 @@
 import select from '@inquirer/select';
 import checkbox from '@inquirer/checkbox';
+import input from '@inquirer/input';
 
 export type RepoType = 'monorepo' | 'single';
 export type AgentType = 'claude' | 'gemini';
@@ -19,6 +20,13 @@ export async function askRepoType(): Promise<RepoType> {
         description: 'A repository containing multiple packages',
       },
     ],
+  });
+}
+
+export async function askWorktreeUrl(): Promise<string> {
+  return input({
+    message: 'Remote repository URL for worktree workflow (leave blank to skip):',
+    default: '',
   });
 }
 

@@ -2,11 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('fs-extra');
 vi.mock('../utils/prompt.js');
+vi.mock('../utils/worktree.js');
 vi.mock('../templates/claude.js');
 vi.mock('../templates/gemini.js');
 
 import fs from 'fs-extra';
-import { askAgents, askRepoType } from '../utils/prompt.js';
+import { askAgents, askRepoType, askWorktreeUrl } from '../utils/prompt.js';
+import { runWorktreeChecks, initStateFile } from '../utils/worktree.js';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
 import { setupCommand } from './setup.js';
@@ -16,6 +18,8 @@ const GEMINI_FILE = { filePath: '/tmp/project/.gemini/commands/osddt.spec.toml',
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: no worktree URL provided interactively
+  vi.mocked(askWorktreeUrl).mockResolvedValue('');
 });
 
 afterEach(() => {
@@ -190,6 +194,80 @@ describe('setup command', () => {
 
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"invalid"'));
       expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('given --worktree-repository is provided and all checks pass', () => {
+    it('should write "worktree-repository" to .osddtrc and initialise state file', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
+      vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      vi.mocked(runWorktreeChecks).mockResolvedValue(true);
+      vi.mocked(initStateFile).mockResolvedValue(undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = setupCommand();
+      await cmd.parseAsync(
+        ['--agents', 'claude', '--repo-type', 'single', '--worktree-repository', 'https://github.com/org/repo.git', '--dir', '/tmp/project'],
+        { from: 'user' },
+      );
+
+      expect(runWorktreeChecks).toHaveBeenCalledWith('/tmp/project');
+      expect(initStateFile).toHaveBeenCalledWith('/tmp/project');
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        expect.stringContaining('.osddtrc'),
+        { 'repoType': 'single', 'agents': ['claude'], 'worktree-repository': 'https://github.com/org/repo.git' },
+        { spaces: 2 },
+      );
+    });
+  });
+
+  describe('given --worktree-repository is provided but environment checks fail', () => {
+    it('should exit with code 1 and not write .osddtrc', async () => {
+      vi.mocked(runWorktreeChecks).mockResolvedValue(false);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
+        throw new Error('process.exit');
+      });
+
+      const cmd = setupCommand();
+      await expect(
+        cmd.parseAsync(
+          ['--agents', 'claude', '--repo-type', 'single', '--worktree-repository', 'https://github.com/org/repo.git', '--dir', '/tmp/project'],
+          { from: 'user' },
+        ),
+      ).rejects.toThrow('process.exit');
+
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(vi.mocked(fs.writeJson)).not.toHaveBeenCalledWith(
+        expect.stringContaining('.osddtrc'),
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('given no --worktree-repository flag and blank interactive URL', () => {
+    it('should omit "worktree-repository" from .osddtrc', async () => {
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
+      vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      vi.mocked(askWorktreeUrl).mockResolvedValue('');
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = setupCommand();
+      await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
+
+      expect(runWorktreeChecks).not.toHaveBeenCalled();
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        expect.stringContaining('.osddtrc'),
+        { repoType: 'single', agents: ['claude'] },
+        { spaces: 2 },
+      );
     });
   });
 });
