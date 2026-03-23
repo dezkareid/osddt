@@ -1,3 +1,10 @@
+## [1.11.7](https://github.com/dezkareid/osddt/compare/osddt-v1.11.6...osddt-v1.11.7) (2026-03-23)
+
+
+### Bug Fixes
+
+* command continue worktree flow ([9b766f9](https://github.com/dezkareid/osddt/commit/9b766f92f6bd78d4e8403bb310fb9645a758c929))
+
 ## [1.11.6](https://github.com/dezkareid/osddt/compare/osddt-v1.11.5...osddt-v1.11.6) (2026-03-23)
 
 
