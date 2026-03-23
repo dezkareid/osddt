@@ -35,7 +35,7 @@ describe('done command', () => {
     });
 
     it('should move the feature folder from working-on to done with a date prefix', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = doneCommand();
       await cmd.parseAsync(['my-feature', '--dir', '/tmp/project'], { from: 'user' });
@@ -66,7 +66,7 @@ describe('done command', () => {
     });
 
     it('should move the feature folder and run git worktree remove', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = doneCommand();
       await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
@@ -99,7 +99,7 @@ describe('done command', () => {
     });
 
     it('should skip git worktree remove when path is gone', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = doneCommand();
       await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
@@ -125,8 +125,8 @@ describe('done command', () => {
     });
 
     it('should warn and skip worktree cleanup', async () => {
-      vi.spyOn(console, 'log').mockImplementation(() => {});
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
       const cmd = doneCommand();
       await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
@@ -146,7 +146,7 @@ describe('done command', () => {
     });
 
     it('should exit with an error message', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });

@@ -39,7 +39,7 @@ describe('start-worktree command', () => {
     });
 
     it('should create a new branch and worktree using barePath as cwd', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
@@ -51,8 +51,23 @@ describe('start-worktree command', () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('feat/my-feature'));
     });
 
+    it('should place the worktree in the parent of bare-path (i.e. the project folder)', async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => { });
+
+      const cmd = startWorktreeCommand();
+      await cmd.parseAsync(['my-feature'], { from: 'user' });
+
+      // worktreePath = path.join(path.dirname('.bare'), 'myrepo-my-feature')
+      // repoName('.bare') = '.bare', so worktree = '/home/user/myproject/.bare-my-feature'
+      // Actually repoName is path.basename('/home/user/myproject/.bare') = '.bare'
+      expect(mockedExecSync).toHaveBeenCalledWith(
+        expect.stringMatching(/worktree add.*my-feature/),
+        expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
+      );
+    });
+
     it('should create the working-on directory inside the worktree', async () => {
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
@@ -61,7 +76,7 @@ describe('start-worktree command', () => {
     });
 
     it('should run package manager install after creating the worktree', async () => {
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
@@ -73,7 +88,7 @@ describe('start-worktree command', () => {
     });
 
     it('should print a summary with branch, worktree path, and working dir', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
@@ -96,7 +111,7 @@ describe('start-worktree command', () => {
     });
 
     it('should abort when the user chooses Abort on Resume prompt', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });
@@ -104,7 +119,7 @@ describe('start-worktree command', () => {
         default: {
           createInterface: () => ({
             question: (_q: string, cb: (ans: string) => void) => cb('a'),
-            close: () => {},
+            close: () => { },
           }),
         },
       }));
@@ -137,7 +152,7 @@ describe('start-worktree command', () => {
     });
 
     it('should skip install and print a reminder', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
