@@ -12,15 +12,22 @@ npx osddt meta-info
 
 ## Repository Configuration
 
-Before proceeding, read the `.osddtrc` file in the root of the repository to determine the project path.
+Before proceeding, read the `.osddtrc` file in the root of the repository to determine the project path and workflow mode.
 
 ```json
-// .osddtrc example
-{ "repoType": "monorepo" | "single" }
+// standard mode
+{ "repoType": "monorepo" | "single", "agents": ["claude"] }
+
+// worktree mode — "worktree-repository" presence determines the workflow
+{ "repoType": "monorepo" | "single", "agents": ["claude"], "worktree-repository": "https://github.com/org/repo.git" }
 ```
 
 - If `repoType` is `"single"`: the project path is the repository root.
 - If `repoType` is `"monorepo"`: ask the user which package to work on (e.g. `packages/my-package`), then use `<repo-root>/<package>` as the project path.
+- If `"worktree-repository"` is **present**: once the feature name is known, run `npx osddt worktree-info <feature-name>` to resolve the working directory:
+  - exit code **0**: parse the JSON and use the returned `workingDir` as the working directory.
+  - exit code **1**: the feature is not yet in a worktree — proceed as standard.
+- If `"worktree-repository"` is **absent**: use the standard project path from `.osddtrc`.
 
 ## Working Directory
 
@@ -42,15 +49,6 @@ Use the following logic to determine `<feature-name>`:
    - If there are **no folders**, inform the user that no in-progress features were found and stop.
 
 ## Instructions
-
-Before checking the working directory, run the following command to check whether this feature uses a git worktree:
-
-```
-npx osddt worktree-info <feature-name>
-```
-
-- If it exits with code **0**: parse the JSON output and use the returned `workingDir` as `<project-path>/working-on/<feature-name>`. Skip the main-tree scan below.
-- If it exits with code **1**: the feature is not a worktree feature. Use the standard project path from `.osddtrc` and scan the main tree as usual.
 
 Check the working directory `<project-path>/working-on/<feature-name>` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
