@@ -174,11 +174,17 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('npx osddt worktree-info');
     });
 
-    it('should instruct listing working-on/ folders in standard mode or after worktree-info fallback', () => {
+    it('should instruct listing working-on/ folders in standard mode', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('worktree-repository` is absent');
       expect(body).toContain('working-on/');
       expect(body).toContain('no arguments were provided');
+    });
+
+    it('should not use interactive-selection language in the standard-mode multiple-folders path', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).not.toContain('ask them to pick');
+      expect(body).not.toContain('ask the user to pick');
     });
 
     it('should detect the implementing phase from osddt.tasks.md with unchecked tasks', () => {
@@ -227,9 +233,10 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('exit');
     });
 
-    it('should instruct falling back to main-tree scan when worktree-info exits with code 1', () => {
+    it('should instruct stopping and re-running with a feature name when worktree-info exits with code 1', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('code **1**');
+      expect(body).not.toContain('fall back to the standard resolution');
     });
   });
 

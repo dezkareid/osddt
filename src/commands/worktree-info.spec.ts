@@ -88,6 +88,38 @@ describe('worktree-info command', () => {
     });
   });
 
+  describe('given no argument and multiple feature worktrees', () => {
+    const SECOND_ENTRY = {
+      featureName: 'other-feature',
+      branch: 'feat/other-feature',
+      worktreePath: '/home/user/myrepo/.bare/other-feature',
+      workingDir: '/home/user/myrepo/.bare/other-feature/working-on/other-feature',
+    };
+
+    beforeEach(() => {
+      vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY, SECOND_ENTRY]);
+    });
+
+    it('should print each feature name and branch to stderr and exit with code 1', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
+        throw new Error('process.exit');
+      });
+
+      const cmd = worktreeInfoCommand();
+      await expect(
+        cmd.parseAsync([], { from: 'user' }),
+      ).rejects.toThrow('process.exit');
+
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Multiple feature worktrees found'));
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('my-feature'));
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('other-feature'));
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
   describe('given no argument and zero feature worktrees', () => {
     beforeEach(() => {
       vi.mocked(listFeatureWorktrees).mockReturnValue([]);

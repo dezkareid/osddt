@@ -145,15 +145,15 @@ Use the following logic to determine the working directory:
    - Otherwise convert it to a feature name following the Feature Name Constraints.
 2. Run \`${npxCommand} worktree-info\` (pass \`<feature-name>\` as argument if one was derived, otherwise run without arguments):
    - exit code **0**: parse the JSON and use the returned \`workingDir\` as the working directory.
-   - exit code **1**: no matching worktree found — fall back to the standard resolution below.
+   - exit code **1**: display the error output from \`worktree-info\` to the user, then **stop** and instruct them to re-run the command with the chosen feature name as an explicit argument (e.g. \`/osddt.continue <feature-name>\`).
 
-**If \`worktree-repository\` is absent in \`.osddtrc\` (standard mode), or after a worktree-info fallback:**
+**If \`worktree-repository\` is absent in \`.osddtrc\` (standard mode):**
 
 1. If arguments were provided, derive the feature name (same rules as above).
 2. If **no arguments were provided**:
    - List all folders under \`<project-path>/working-on/\`.
    - If there is **only one folder**, use it automatically and inform the user.
-   - If there are **multiple folders**, present the list to the user and ask them to pick one.
+   - If there are **multiple folders**, display the list as a numbered enumeration, then **stop** and instruct the user to re-run the command with the chosen feature name as an explicit argument (e.g. \`/osddt.continue <feature-name>\`).
    - If there are **no folders**, inform the user that no in-progress features were found and stop.
 
 ## Instructions
