@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('fs-extra');
+vi.mock('child_process');
 vi.mock('../utils/prompt.js');
 vi.mock('../utils/worktree.js');
 vi.mock('../templates/claude.js');
 vi.mock('../templates/gemini.js');
 
 import fs from 'fs-extra';
+import { execSync } from 'child_process';
 import { askAgents, askRepoType, askWorktreeUrl } from '../utils/prompt.js';
 import { runWorktreeChecks, initStateFile } from '../utils/worktree.js';
 import { getClaudeTemplates } from '../templates/claude.js';
@@ -20,6 +22,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Default: no worktree URL provided interactively
   vi.mocked(askWorktreeUrl).mockResolvedValue('');
+  // Default: current directory is already a git repository
+  vi.mocked(execSync).mockReturnValue(Buffer.from(''));
 });
 
 afterEach(() => {
@@ -246,6 +250,40 @@ describe('setup command', () => {
         expect.anything(),
         expect.anything(),
       );
+    });
+  });
+
+  describe('given --worktree-repository and the directory is not a git repository', () => {
+    it('should clone bare and configure core.bare before running checks', async () => {
+      // First execSync call (git rev-parse --git-dir) throws — not a git repo
+      vi.mocked(execSync)
+        .mockImplementationOnce(() => { throw new Error('not a git repo'); })
+        .mockReturnValue(Buffer.from(''));
+
+      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
+      vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+      vi.mocked(runWorktreeChecks).mockResolvedValue(true);
+      vi.mocked(initStateFile).mockResolvedValue(undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = setupCommand();
+      await cmd.parseAsync(
+        ['--agents', 'claude', '--repo-type', 'single', '--worktree-repository', 'https://github.com/org/repo.git', '--dir', '/tmp/project'],
+        { from: 'user' },
+      );
+
+      expect(execSync).toHaveBeenCalledWith(
+        'git clone --bare "https://github.com/org/repo.git" .git',
+        expect.objectContaining({ cwd: '/tmp/project' }),
+      );
+      expect(execSync).toHaveBeenCalledWith(
+        'git config --local core.bare false',
+        expect.objectContaining({ cwd: '/tmp/project' }),
+      );
+      expect(runWorktreeChecks).toHaveBeenCalledWith('/tmp/project');
     });
   });
 
