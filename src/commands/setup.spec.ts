@@ -202,7 +202,7 @@ describe('setup command', () => {
   });
 
   describe('given --worktree-repository is provided and all checks pass', () => {
-    it('should write "worktree-repository" to .osddtrc and initialise state file', async () => {
+    it('should clone bare into .bare, write "bare-path" and "worktree-repository" to .osddtrc', async () => {
       vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
@@ -218,11 +218,20 @@ describe('setup command', () => {
         { from: 'user' },
       );
 
-      expect(runWorktreeChecks).toHaveBeenCalledWith('/tmp/project');
-      expect(initStateFile).toHaveBeenCalledWith('/tmp/project');
+      expect(execSync).toHaveBeenCalledWith(
+        'git clone --bare "https://github.com/org/repo.git" "/tmp/project/.bare"',
+        { stdio: 'inherit' },
+      );
+      expect(runWorktreeChecks).toHaveBeenCalledWith('/tmp/project/.bare');
+      expect(initStateFile).toHaveBeenCalledWith('/tmp/project/.bare');
       expect(fs.writeJson).toHaveBeenCalledWith(
         expect.stringContaining('.osddtrc'),
-        { 'repoType': 'single', 'agents': ['claude'], 'worktree-repository': 'https://github.com/org/repo.git' },
+        {
+          'repoType': 'single',
+          'agents': ['claude'],
+          'worktree-repository': 'https://github.com/org/repo.git',
+          'bare-path': '/tmp/project/.bare',
+        },
         { spaces: 2 },
       );
     });
@@ -250,40 +259,6 @@ describe('setup command', () => {
         expect.anything(),
         expect.anything(),
       );
-    });
-  });
-
-  describe('given --worktree-repository and the directory is not a git repository', () => {
-    it('should clone bare and configure core.bare before running checks', async () => {
-      // First execSync call (git rev-parse --git-dir) throws — not a git repo
-      vi.mocked(execSync)
-        .mockImplementationOnce(() => { throw new Error('not a git repo'); })
-        .mockReturnValue(Buffer.from(''));
-
-      vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
-      vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
-      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
-      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.mocked(runWorktreeChecks).mockResolvedValue(true);
-      vi.mocked(initStateFile).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const cmd = setupCommand();
-      await cmd.parseAsync(
-        ['--agents', 'claude', '--repo-type', 'single', '--worktree-repository', 'https://github.com/org/repo.git', '--dir', '/tmp/project'],
-        { from: 'user' },
-      );
-
-      expect(execSync).toHaveBeenCalledWith(
-        'git clone --bare "https://github.com/org/repo.git" .git',
-        expect.objectContaining({ cwd: '/tmp/project' }),
-      );
-      expect(execSync).toHaveBeenCalledWith(
-        'git config --local core.bare false',
-        expect.objectContaining({ cwd: '/tmp/project' }),
-      );
-      expect(runWorktreeChecks).toHaveBeenCalledWith('/tmp/project');
     });
   });
 

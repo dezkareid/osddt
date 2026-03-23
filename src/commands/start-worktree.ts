@@ -12,10 +12,6 @@ export interface WorktreeEntry {
   repoRoot: string;
 }
 
-function resolveRepoRoot(cwd: string): string {
-  return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
-}
-
 function repoName(repoRoot: string): string {
   return path.basename(repoRoot);
 }
@@ -66,6 +62,16 @@ async function prompt(question: string): Promise<string> {
 interface OsddtRc {
   repoType: 'single' | 'monorepo';
   worktreeBase?: string;
+  'bare-path'?: string;
+}
+
+async function resolveRepoRoot(cwd: string): Promise<string> {
+  const rcPath = path.join(cwd, '.osddtrc');
+  if (await fs.pathExists(rcPath)) {
+    const rc = await fs.readJson(rcPath) as OsddtRc;
+    if (rc['bare-path']) return rc['bare-path'];
+  }
+  return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
 }
 
 async function createWorktree(branch: string, worktreePath: string, repoRoot: string): Promise<void> {
@@ -98,17 +104,17 @@ async function createWorktree(branch: string, worktreePath: string, repoRoot: st
 
 async function runStartWorktree(featureName: string, options: { dir?: string }): Promise<void> {
   const cwd = process.cwd();
-  const repoRoot = resolveRepoRoot(cwd);
+  const repoRoot = await resolveRepoRoot(cwd);
   const branch = `feat/${featureName}`;
 
   // Read .osddtrc
-  const rcPath = path.join(repoRoot, '.osddtrc');
+  const rcPath = path.join(cwd, '.osddtrc');
   let rc: OsddtRc = { repoType: 'single' };
   if (await fs.pathExists(rcPath)) {
     rc = await fs.readJson(rcPath) as OsddtRc;
   }
 
-  // Resolve worktree path
+  // Resolve worktree path — base is parent of repoRoot (i.e. cwd when using .bare)
   const base = rc.worktreeBase ?? path.dirname(repoRoot);
   const worktreePath = path.join(base, `${repoName(repoRoot)}-${featureName}`);
 

@@ -55,6 +55,7 @@ describe('done command', () => {
         return '';
       });
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        if (String(p).endsWith('.osddtrc')) return false;
         if (String(p).endsWith('my-feature')) return true;
         if (String(p).endsWith('.osddt-worktrees')) return true;
         if (String(p).includes('myrepo-my-feature') && !String(p).includes('working-on')) return true;
@@ -110,6 +111,7 @@ describe('done command', () => {
       mockedExecSync.mockReturnValue('/home/user/myrepo\n');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         const s = String(p);
+        if (s.endsWith('.osddtrc')) return false;
         if (s === '/home/user/myrepo-my-feature') return false; // worktree gone
         if (s.endsWith('my-feature')) return true;
         if (s.endsWith('.osddt-worktrees')) return true;

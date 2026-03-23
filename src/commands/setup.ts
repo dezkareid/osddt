@@ -32,6 +32,7 @@ interface OsddtConfig {
   'repoType': RepoType;
   'agents': AgentType[];
   'worktree-repository'?: string;
+  'bare-path'?: string;
 }
 
 interface SetupOptions {
@@ -98,36 +99,26 @@ async function writeAgentFiles(cwd: string, agents: AgentType[], npxCommand: str
   }
 }
 
-function isGitRepository(cwd: string): boolean {
-  try {
-    execSync('git rev-parse --git-dir', { cwd, stdio: 'ignore' });
-    return true;
-  }
-  catch {
-    return false;
-  }
-}
-
-function cloneBareRepository(cwd: string, repositoryUrl: string): void {
-  console.log(`Cloning repository as bare into ${cwd}/.git ...\n`);
-  execSync(`git clone --bare "${repositoryUrl}" .git`, { cwd, stdio: 'inherit' });
-  execSync('git config --local core.bare false', { cwd, stdio: 'inherit' });
+function cloneBareRepository(cwd: string, repositoryUrl: string): string {
+  const barePath = path.join(cwd, '.bare');
+  console.log(`Cloning bare repository into ${barePath} ...\n`);
+  execSync(`git clone --bare "${repositoryUrl}" "${barePath}"`, { stdio: 'inherit' });
   console.log('');
+  return barePath;
 }
 
-async function setupWorktreeEnvironment(cwd: string, worktreeRepository: string): Promise<void> {
-  if (!isGitRepository(cwd)) {
-    cloneBareRepository(cwd, worktreeRepository);
-  }
+async function setupWorktreeEnvironment(cwd: string, worktreeRepository: string): Promise<string> {
+  const barePath = cloneBareRepository(cwd, worktreeRepository);
   console.log('Checking environment for git worktree support...\n');
-  const allPassed = await runWorktreeChecks(cwd);
+  const allPassed = await runWorktreeChecks(barePath);
   console.log('');
   if (!allPassed) {
     console.log('Some checks failed. Resolve the issues above before using the worktree workflow.');
     process.exit(1);
   }
-  await initStateFile(cwd);
+  await initStateFile(barePath);
   console.log('');
+  return barePath;
 }
 
 async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, rawWorktreeRepository?: string): Promise<void> {
@@ -143,8 +134,9 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, r
     = rawWorktreeRepository !== undefined ? rawWorktreeRepository : (await askWorktreeUrl()) || undefined;
   if (rawWorktreeRepository === undefined) console.log('');
 
+  let barePath: string | undefined;
   if (worktreeRepository) {
-    await setupWorktreeEnvironment(cwd, worktreeRepository);
+    barePath = await setupWorktreeEnvironment(cwd, worktreeRepository);
   }
 
   const npxCommand = await resolveNpxCommand(cwd);
@@ -154,6 +146,7 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, r
 
   const config: OsddtConfig = { repoType, agents };
   if (worktreeRepository) config['worktree-repository'] = worktreeRepository;
+  if (barePath) config['bare-path'] = barePath;
   await writeConfig(cwd, config);
 
   console.log('\nSetup complete!');
