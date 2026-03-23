@@ -43,6 +43,15 @@ Use the following logic to determine `<feature-name>`:
 
 ## Instructions
 
+Before checking the working directory, run the following command to check whether this feature uses a git worktree:
+
+```
+npx osddt worktree-info <feature-name>
+```
+
+- If it exits with code **0**: parse the JSON output and use the returned `workingDir` as `<project-path>/working-on/<feature-name>`. Skip the main-tree scan below.
+- If it exits with code **1**: the feature is not a worktree feature. Use the standard project path from `.osddtrc` and scan the main tree as usual.
+
 Check the working directory `<project-path>/working-on/<feature-name>` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
 | Condition | Current phase | Run next |
