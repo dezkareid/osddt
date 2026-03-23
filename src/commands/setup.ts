@@ -34,6 +34,7 @@ interface OsddtConfig {
   'worktree-repository'?: string;
   'bare-path'?: string;
   'packageManager'?: string;
+  'mainBranch'?: string;
 }
 
 interface SetupOptions {
@@ -151,7 +152,7 @@ async function setupWorktreeEnvironment(
   cwd: string,
   worktreeRepository: string,
   agents: AgentType[],
-): Promise<{ barePath: string; packageManager: string }> {
+): Promise<{ barePath: string; packageManager: string; mainBranch: string }> {
   const barePath = cloneBareRepository(cwd, worktreeRepository);
 
   const branch = detectDefaultBranch(barePath);
@@ -171,7 +172,7 @@ async function setupWorktreeEnvironment(
   await writeAgentPointerFiles(cwd, agents, branch);
   console.log('');
 
-  return { barePath, packageManager };
+  return { barePath, packageManager, mainBranch: branch };
 }
 
 async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, rawWorktreeRepository?: string): Promise<void> {
@@ -187,10 +188,10 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, r
     = rawWorktreeRepository !== undefined ? rawWorktreeRepository : (await askWorktreeUrl()) || undefined;
   if (rawWorktreeRepository === undefined) console.log('');
 
-  let barePath: string | undefined;
-  let packageManager: string | undefined;
+  let worktreeConfig: Partial<OsddtConfig> = {};
   if (worktreeRepository) {
-    ({ barePath, packageManager } = await setupWorktreeEnvironment(cwd, worktreeRepository, agents));
+    const { barePath, packageManager, mainBranch } = await setupWorktreeEnvironment(cwd, worktreeRepository, agents);
+    worktreeConfig = { 'worktree-repository': worktreeRepository, 'bare-path': barePath, packageManager, mainBranch };
   }
 
   const npxCommand = await resolveNpxCommand(cwd);
@@ -198,10 +199,7 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, r
   console.log('Setting up OSDDT command files...\n');
   await writeAgentFiles(cwd, agents, npxCommand);
 
-  const config: OsddtConfig = { repoType, agents };
-  if (worktreeRepository) config['worktree-repository'] = worktreeRepository;
-  if (barePath) config['bare-path'] = barePath;
-  if (packageManager) config['packageManager'] = packageManager;
+  const config: OsddtConfig = { repoType, agents, ...worktreeConfig };
   await writeConfig(cwd, config);
 
   console.log('\nSetup complete!');

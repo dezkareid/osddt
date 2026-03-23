@@ -1,37 +1,66 @@
 import { Command } from 'commander';
 import path from 'path';
 import fs from 'fs-extra';
-import { execSync } from 'child_process';
-import type { WorktreeEntry } from './start-worktree.js';
+import readline from 'readline';
+import { resolveBarePath, listFeatureWorktrees, type WorktreeEntry } from '../utils/worktree.js';
 
-async function resolveRepoRoot(cwd: string): Promise<string> {
+async function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+async function selectWorktree(entries: WorktreeEntry[]): Promise<WorktreeEntry> {
+  console.log('\nMultiple feature worktrees found:');
+  entries.forEach((e, i) => {
+    console.log(`  ${i + 1}) ${e.featureName} (${e.branch})`);
+  });
+  const answer = await prompt(`Select a feature [1-${entries.length}]: `);
+  const index = parseInt(answer, 10) - 1;
+  if (index < 0 || index >= entries.length || isNaN(index)) {
+    console.error('Invalid selection.');
+    process.exit(1);
+  }
+  return entries[index];
+}
+
+async function runWorktreeInfo(featureName: string | undefined): Promise<void> {
+  const cwd = process.cwd();
+  const barePath = await resolveBarePath(cwd);
+
   const rcPath = path.join(cwd, '.osddtrc');
+  let mainBranch = 'main';
   if (await fs.pathExists(rcPath)) {
-    const rc = await fs.readJson(rcPath) as { 'bare-path'?: string };
-    if (rc['bare-path']) return rc['bare-path'];
-  }
-  return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
-}
-
-function stateFilePath(repoRoot: string): string {
-  return path.join(path.dirname(repoRoot), '.osddt-worktrees');
-}
-
-async function runWorktreeInfo(featureName: string): Promise<void> {
-  const repoRoot = await resolveRepoRoot(process.cwd());
-  const stateFile = stateFilePath(repoRoot);
-
-  if (!(await fs.pathExists(stateFile))) {
-    console.error(`No .osddt-worktrees file found at: ${stateFile}`);
-    process.exit(1);
+    const rc = await fs.readJson(rcPath) as { mainBranch?: string };
+    if (rc.mainBranch) mainBranch = rc.mainBranch;
   }
 
-  const entries = await fs.readJson(stateFile) as WorktreeEntry[];
-  const entry = entries.find(e => e.featureName === featureName);
+  const entries = listFeatureWorktrees(barePath, mainBranch);
 
-  if (!entry) {
-    console.error(`No worktree entry found for feature: ${featureName}`);
-    process.exit(1);
+  let entry: WorktreeEntry | undefined;
+
+  if (featureName) {
+    entry = entries.find(e => e.featureName === featureName);
+    if (!entry) {
+      console.error(`No worktree found for feature: ${featureName}`);
+      process.exit(1);
+    }
+  }
+  else {
+    if (entries.length === 0) {
+      console.error('No feature worktrees found.');
+      process.exit(1);
+    }
+    else if (entries.length === 1) {
+      entry = entries[0];
+    }
+    else {
+      entry = await selectWorktree(entries);
+    }
   }
 
   console.log(JSON.stringify({ worktreePath: entry.worktreePath, workingDir: entry.workingDir, branch: entry.branch }));
@@ -41,9 +70,9 @@ export function worktreeInfoCommand(): Command {
   const cmd = new Command('worktree-info');
 
   cmd
-    .description('Look up worktree paths for a feature from the state file')
-    .argument('<feature-name>', 'feature name to look up')
-    .action(async (featureName: string) => {
+    .description('Look up worktree paths for a feature from git worktree list')
+    .argument('[feature-name]', 'feature name to look up (optional if only one worktree exists)')
+    .action(async (featureName: string | undefined) => {
       await runWorktreeInfo(featureName);
     });
 

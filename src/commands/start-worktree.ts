@@ -3,15 +3,9 @@ import path from 'path';
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
 import readline from 'readline';
-import { resolveBarePath, findWorktreeByFeature } from '../utils/worktree.js';
+import { resolveBarePath, findWorktreeByFeature, type WorktreeEntry } from '../utils/worktree.js';
 
-export interface WorktreeEntry {
-  featureName: string;
-  branch: string;
-  worktreePath: string;
-  workingDir: string;
-  repoRoot: string;
-}
+export type { WorktreeEntry };
 
 function branchExists(branch: string, cwd: string): boolean {
   try {
@@ -47,9 +41,10 @@ interface OsddtRc {
   repoType: 'single' | 'monorepo';
   worktreeBase?: string;
   packageManager?: string;
+  mainBranch?: string;
 }
 
-async function createWorktree(branch: string, worktreePath: string, repoRoot: string): Promise<void> {
+async function createWorktree(branch: string, worktreePath: string, repoRoot: string, mainBranch: string): Promise<void> {
   if (await fs.pathExists(worktreePath)) {
     console.log(`\nDirectory already exists at: ${worktreePath}`);
     const answer = await prompt('Resume or Abort? [R/a] ');
@@ -73,7 +68,7 @@ async function createWorktree(branch: string, worktreePath: string, repoRoot: st
     execSync(`git worktree add "${worktreePath}" ${branch}`, { cwd: repoRoot, stdio: 'inherit' });
   }
   else {
-    execSync(`git worktree add "${worktreePath}" -b ${branch}`, { cwd: repoRoot, stdio: 'inherit' });
+    execSync(`git worktree add "${worktreePath}" -b ${branch} ${mainBranch}`, { cwd: repoRoot, stdio: 'inherit' });
   }
 }
 
@@ -118,8 +113,9 @@ async function runStartWorktree(featureName: string, options: { dir?: string }):
   // Resolve worktree path — inside .bare as <barePath>/<featureName>
   const base = rc['worktreeBase'] ?? repoRoot;
   const worktreePath = path.join(base, featureName);
+  const mainBranch = rc['mainBranch'] ?? 'main';
 
-  await createWorktree(branch, worktreePath, repoRoot);
+  await createWorktree(branch, worktreePath, repoRoot, mainBranch);
 
   // Resolve working dir
   let projectPath: string;

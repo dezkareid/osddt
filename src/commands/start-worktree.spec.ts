@@ -34,18 +34,19 @@ describe('start-worktree command', () => {
       vi.mocked(fs.readJson).mockResolvedValue({
         repoType: 'single',
         packageManager: 'pnpm',
+        mainBranch: 'main',
       });
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
     });
 
-    it('should create a new branch and worktree using barePath as cwd', async () => {
+    it('should create a new branch and worktree using barePath as cwd, branching off mainBranch', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
 
       expect(mockedExecSync).toHaveBeenCalledWith(
-        expect.stringContaining('worktree add'),
+        expect.stringMatching(/worktree add.*-b feat\/my-feature main/),
         expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
       );
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('feat/my-feature'));
@@ -129,6 +130,36 @@ describe('start-worktree command', () => {
 
       expect(exitSpy).toHaveBeenCalledWith(0);
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('given mainBranch is absent from .osddtrc', () => {
+    beforeEach(() => {
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue(undefined);
+      mockedExecSync.mockImplementation((cmd: string) => {
+        if (cmd.includes('rev-parse --verify')) throw new Error('branch not found');
+        if (cmd.includes('ls-remote')) throw new Error('not found');
+        return '' as unknown as Buffer;
+      });
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        if (String(p).endsWith('.osddtrc')) return true;
+        return false;
+      });
+      vi.mocked(fs.readJson).mockResolvedValue({ repoType: 'single' });
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+    });
+
+    it('should fall back to main as the base branch', async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => { });
+
+      const cmd = startWorktreeCommand();
+      await cmd.parseAsync(['my-feature'], { from: 'user' });
+
+      expect(mockedExecSync).toHaveBeenCalledWith(
+        expect.stringMatching(/worktree add.*-b feat\/my-feature main/),
+        expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
+      );
     });
   });
 

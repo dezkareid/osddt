@@ -2,34 +2,32 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('fs-extra');
 vi.mock('child_process');
+vi.mock('../utils/worktree.js');
 
 import fs from 'fs-extra';
-import { execSync } from 'child_process';
+import { resolveBarePath, listFeatureWorktrees } from '../utils/worktree.js';
 import { worktreeInfoCommand } from './worktree-info.js';
 
-const mockedExecSync = vi.mocked(execSync);
+const FEATURE_ENTRY = {
+  featureName: 'my-feature',
+  branch: 'feat/my-feature',
+  worktreePath: '/home/user/myrepo/.bare/my-feature',
+  workingDir: '/home/user/myrepo/.bare/my-feature/working-on/my-feature',
+};
 
 describe('worktree-info command', () => {
+  beforeEach(() => {
+    vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myrepo/.bare');
+    vi.mocked(fs.pathExists).mockResolvedValue(false);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe('given the feature exists in the state file', () => {
+  describe('given a feature name argument that matches a worktree', () => {
     beforeEach(() => {
-      mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
-      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
-        if (String(p).endsWith('.osddtrc')) return false;
-        return true;
-      });
-      vi.mocked(fs.readJson).mockResolvedValue([
-        {
-          featureName: 'my-feature',
-          branch: 'feat/my-feature',
-          worktreePath: '/home/user/myrepo-my-feature',
-          workingDir: '/home/user/myrepo-my-feature/working-on/my-feature',
-          repoRoot: '/home/user/myrepo',
-        },
-      ]);
+      vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
     });
 
     it('should print JSON with worktreePath, workingDir, and branch', async () => {
@@ -40,22 +38,17 @@ describe('worktree-info command', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         JSON.stringify({
-          worktreePath: '/home/user/myrepo-my-feature',
-          workingDir: '/home/user/myrepo-my-feature/working-on/my-feature',
-          branch: 'feat/my-feature',
+          worktreePath: FEATURE_ENTRY.worktreePath,
+          workingDir: FEATURE_ENTRY.workingDir,
+          branch: FEATURE_ENTRY.branch,
         }),
       );
     });
   });
 
-  describe('given the feature does not exist in the state file', () => {
+  describe('given a feature name argument that does not match any worktree', () => {
     beforeEach(() => {
-      mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
-      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
-        if (String(p).endsWith('.osddtrc')) return false;
-        return true;
-      });
-      vi.mocked(fs.readJson).mockResolvedValue([]);
+      vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
     });
 
     it('should print an error and exit with code 1', async () => {
@@ -74,10 +67,30 @@ describe('worktree-info command', () => {
     });
   });
 
-  describe('given the state file does not exist', () => {
+  describe('given no argument and exactly one feature worktree', () => {
     beforeEach(() => {
-      mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
-      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
+    });
+
+    it('should use the single entry automatically and print JSON', async () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = worktreeInfoCommand();
+      await cmd.parseAsync([], { from: 'user' });
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        JSON.stringify({
+          worktreePath: FEATURE_ENTRY.worktreePath,
+          workingDir: FEATURE_ENTRY.workingDir,
+          branch: FEATURE_ENTRY.branch,
+        }),
+      );
+    });
+  });
+
+  describe('given no argument and zero feature worktrees', () => {
+    beforeEach(() => {
+      vi.mocked(listFeatureWorktrees).mockReturnValue([]);
     });
 
     it('should print an error and exit with code 1', async () => {
@@ -88,11 +101,28 @@ describe('worktree-info command', () => {
 
       const cmd = worktreeInfoCommand();
       await expect(
-        cmd.parseAsync(['my-feature'], { from: 'user' }),
+        cmd.parseAsync([], { from: 'user' }),
       ).rejects.toThrow('process.exit');
 
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('.osddt-worktrees'));
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('No feature worktrees found'));
       expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('given .osddtrc with mainBranch set', () => {
+    beforeEach(() => {
+      vi.mocked(fs.pathExists).mockResolvedValue(true);
+      vi.mocked(fs.readJson).mockResolvedValue({ mainBranch: 'master' });
+      vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
+    });
+
+    it('should pass mainBranch from .osddtrc to listFeatureWorktrees', async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const cmd = worktreeInfoCommand();
+      await cmd.parseAsync(['my-feature'], { from: 'user' });
+
+      expect(listFeatureWorktrees).toHaveBeenCalledWith('/home/user/myrepo/.bare', 'master');
     });
   });
 });

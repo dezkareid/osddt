@@ -241,6 +241,7 @@ describe('setup command', () => {
           'agents': ['claude'],
           'worktree-repository': 'https://github.com/org/repo.git',
           'bare-path': '/tmp/project/.bare',
+          'mainBranch': 'main',
         }),
         { spaces: 2 },
       );
