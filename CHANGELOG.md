@@ -1,3 +1,10 @@
+## [1.11.4](https://github.com/dezkareid/osddt/compare/osddt-v1.11.3...osddt-v1.11.4) (2026-03-23)
+
+
+### Bug Fixes
+
+* setup creating context files and worktree files ([a347c81](https://github.com/dezkareid/osddt/commit/a347c813e39a27af7e8ae9557c7535b718971402))
+
 ## [1.11.3](https://github.com/dezkareid/osddt/compare/osddt-v1.11.2...osddt-v1.11.3) (2026-03-23)
 
 
