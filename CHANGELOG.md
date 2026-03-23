@@ -1,3 +1,10 @@
+## [1.11.5](https://github.com/dezkareid/osddt/compare/osddt-v1.11.4...osddt-v1.11.5) (2026-03-23)
+
+
+### Bug Fixes
+
+* start worktree to use name of feature only ([5fad7b1](https://github.com/dezkareid/osddt/commit/5fad7b14b45872036c1f5e9798f33fec78d26ce4))
+
 ## [1.11.4](https://github.com/dezkareid/osddt/compare/osddt-v1.11.3...osddt-v1.11.4) (2026-03-23)
 
 
