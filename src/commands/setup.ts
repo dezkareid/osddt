@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import path from 'path';
 import fs from 'fs-extra';
+import { execSync } from 'child_process';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
 import { askRepoType, askAgents, askWorktreeUrl, type RepoType, type AgentType } from '../utils/prompt.js';
@@ -97,7 +98,27 @@ async function writeAgentFiles(cwd: string, agents: AgentType[], npxCommand: str
   }
 }
 
-async function setupWorktreeEnvironment(cwd: string, _worktreeRepository: string): Promise<void> {
+function isGitRepository(cwd: string): boolean {
+  try {
+    execSync('git rev-parse --git-dir', { cwd, stdio: 'ignore' });
+    return true;
+  }
+  catch {
+    return false;
+  }
+}
+
+function cloneBareRepository(cwd: string, repositoryUrl: string): void {
+  console.log(`Cloning repository as bare into ${cwd}/.git ...\n`);
+  execSync(`git clone --bare "${repositoryUrl}" .git`, { cwd, stdio: 'inherit' });
+  execSync('git config --local core.bare false', { cwd, stdio: 'inherit' });
+  console.log('');
+}
+
+async function setupWorktreeEnvironment(cwd: string, worktreeRepository: string): Promise<void> {
+  if (!isGitRepository(cwd)) {
+    cloneBareRepository(cwd, worktreeRepository);
+  }
   console.log('Checking environment for git worktree support...\n');
   const allPassed = await runWorktreeChecks(cwd);
   console.log('');
