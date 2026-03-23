@@ -9,7 +9,6 @@ import { updateCommand } from './commands/update.js';
 import { contextCommand } from './commands/context.js';
 import { startWorktreeCommand } from './commands/start-worktree.js';
 import { worktreeInfoCommand } from './commands/worktree-info.js';
-import { setupWorktreeCommand } from './commands/setup-worktree.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +29,5 @@ program.addCommand(updateCommand());
 program.addCommand(contextCommand());
 program.addCommand(startWorktreeCommand());
 program.addCommand(worktreeInfoCommand());
-program.addCommand(setupWorktreeCommand());
 
 program.parse(process.argv);

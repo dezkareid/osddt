@@ -111,7 +111,8 @@ osddt/
 │   │   ├── claude.ts              # Formats COMMAND_DEFINITIONS as Markdown (.claude/commands/osddt.<name>.md)
 │   │   └── gemini.ts              # Formats COMMAND_DEFINITIONS as TOML (.gemini/commands/osddt.<name>.toml)
 │   └── utils/
-│       └── prompt.ts              # Inquirer prompts: askAgents() (checkbox) and askRepoType() (select)
+│       ├── prompt.ts              # Inquirer prompts: askAgents() (checkbox), askRepoType() (select), askWorktreeUrl() (input)
+│       └── worktree.ts            # Shared worktree helpers: git version check, not-a-worktree check, writable check, state file init
 ├── dist/                          # Compiled output (single ESM bundle, gitignored)
 ├── rollup.config.js               # Bundles src/index.ts → dist/index.js (ESM, shebang injected)
 ├── tsconfig.json                  # TypeScript config
@@ -125,7 +126,7 @@ osddt/
 #### Key relationships
 
 - **`shared.ts` is the single source of truth** for all command template content. Both `claude.ts` and `gemini.ts` import `COMMAND_DEFINITIONS` from it and only differ in file format (Markdown vs TOML) and argument placeholder (`$ARGUMENTS` vs `{{args}}`).
-- **`setup.ts`** orchestrates setup: reads `--agents`/`--repo-type` flags when provided (non-interactive), otherwise calls `askAgents()` → `askRepoType()` → writes selected agent files → writes `.osddtrc`.
+- **`setup.ts`** orchestrates setup: reads `--agents`/`--repo-type`/`--worktree-repository` flags when provided (non-interactive), otherwise calls `askAgents()` → `askRepoType()` → `askWorktreeUrl()` → if URL provided, runs worktree environment checks via `worktree.ts` → writes selected agent files → writes `.osddtrc`.
 - **`meta-info.ts`** is referenced inside the generated templates so agents can fetch live branch/date at invocation time (not baked in at build time).
 - **Test files** (`.spec.ts`) live next to the source file they cover. Template tests are pure (no mocks); command tests mock `fs-extra` and `child_process`.
 
@@ -146,28 +147,28 @@ The selected agents are saved in `.osddtrc` alongside `repoType`. When `osddt up
 
 #### Available commands
 
-| Command                                                              | Context       | Description                                                   |
-| -------------------------------------------------------------------- | ------------- | ------------------------------------------------------------- |
-| `osddt setup`                                                        | Local dev     | Generate agent command files for Claude and Gemini            |
-| `osddt setup --agents <list> --repo-type <type>`                     | Local dev     | Non-interactive setup (for CI/scripted environments)          |
-| `npx @dezkareid/osddt setup`                                         | External      | Generate agent command files for Claude and Gemini            |
-| `npx @dezkareid/osddt setup --agents <list> --repo-type <type>`      | External      | Non-interactive setup (for CI/scripted environments)          |
-| `osddt meta-info`                                                    | Local dev     | Output current branch and date as JSON                        |
-| `npx @dezkareid/osddt meta-info`                                     | External      | Output current branch and date as JSON                        |
-| `osddt done <feature-name> --dir <project-path>`                              | Local dev     | Move `working-on/<feature>` to `done/<feature>`               |
-| `npx @dezkareid/osddt done <feature-name> --dir <project-path>`               | External      | Move `working-on/<feature>` to `done/<feature>`               |
-| `osddt done <feature-name> --dir <project-path> --worktree`                   | Local dev     | Archive feature, remove git worktree, and clean state file    |
-| `npx @dezkareid/osddt done <feature-name> --dir <project-path> --worktree`    | External      | Archive feature, remove git worktree, and clean state file    |
-| `osddt update`                                                                | Local dev     | Regenerate agent command files from the existing `.osddtrc`   |
-| `npx @dezkareid/osddt update`                                                 | External      | Regenerate agent command files from the existing `.osddtrc`   |
-| `osddt start-worktree <feature-name>`                                         | Local dev     | Create a git worktree for a feature and scaffold working-on/  |
-| `npx @dezkareid/osddt start-worktree <feature-name>`                          | External      | Create a git worktree for a feature and scaffold working-on/  |
-| `osddt start-worktree <feature-name> --dir <package-path>`                    | Local dev     | Same, specifying the package path in a monorepo               |
-| `npx @dezkareid/osddt start-worktree <feature-name> --dir <package-path>`     | External      | Same, specifying the package path in a monorepo               |
-| `osddt worktree-info <feature-name>`                                          | Local dev     | Look up worktree paths for a feature (JSON output)            |
-| `npx @dezkareid/osddt worktree-info <feature-name>`                           | External      | Look up worktree paths for a feature (JSON output)            |
-| `osddt setup-worktree`                                                        | Local dev     | Validate environment for git worktree usage                   |
-| `npx @dezkareid/osddt setup-worktree`                                         | External      | Validate environment for git worktree usage                   |
+| Command                                                                                        | Context       | Description                                                   |
+| ---------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------- |
+| `osddt setup`                                                                                  | Local dev     | Generate agent command files for Claude and Gemini            |
+| `osddt setup --agents <list> --repo-type <type>`                                               | Local dev     | Non-interactive setup (for CI/scripted environments)          |
+| `osddt setup --worktree-repository <url>`                                                      | Local dev     | Setup with worktree workflow enabled                          |
+| `npx @dezkareid/osddt setup`                                                                   | External      | Generate agent command files for Claude and Gemini            |
+| `npx @dezkareid/osddt setup --agents <list> --repo-type <type>`                                | External      | Non-interactive setup (for CI/scripted environments)          |
+| `npx @dezkareid/osddt setup --worktree-repository <url>`                                       | External      | Setup with worktree workflow enabled                          |
+| `osddt meta-info`                                                                              | Local dev     | Output current branch and date as JSON                        |
+| `npx @dezkareid/osddt meta-info`                                                               | External      | Output current branch and date as JSON                        |
+| `osddt done <feature-name> --dir <project-path>`                                               | Local dev     | Move `working-on/<feature>` to `done/<feature>`               |
+| `npx @dezkareid/osddt done <feature-name> --dir <project-path>`                                | External      | Move `working-on/<feature>` to `done/<feature>`               |
+| `osddt done <feature-name> --dir <project-path> --worktree`                                    | Local dev     | Archive feature, remove git worktree, and clean state file    |
+| `npx @dezkareid/osddt done <feature-name> --dir <project-path> --worktree`                     | External      | Archive feature, remove git worktree, and clean state file    |
+| `osddt update`                                                                                 | Local dev     | Regenerate agent command files from the existing `.osddtrc`   |
+| `npx @dezkareid/osddt update`                                                                  | External      | Regenerate agent command files from the existing `.osddtrc`   |
+| `osddt start-worktree <feature-name>`                                                          | Local dev     | Create a git worktree for a feature and scaffold working-on/  |
+| `npx @dezkareid/osddt start-worktree <feature-name>`                                           | External      | Create a git worktree for a feature and scaffold working-on/  |
+| `osddt start-worktree <feature-name> --dir <package-path>`                                     | Local dev     | Same, specifying the package path in a monorepo               |
+| `npx @dezkareid/osddt start-worktree <feature-name> --dir <package-path>`                      | External      | Same, specifying the package path in a monorepo               |
+| `osddt worktree-info <feature-name>`                                                           | Local dev     | Look up worktree paths for a feature (JSON output)            |
+| `npx @dezkareid/osddt worktree-info <feature-name>`                                            | External      | Look up worktree paths for a feature (JSON output)            |
 
 #### `osddt setup` options
 
@@ -175,27 +176,27 @@ The selected agents are saved in `.osddtrc` alongside `repoType`. When `osddt up
 | ---- | ------ | ----------- |
 | `--agents <list>` | `claude`, `gemini` (comma-separated) | Skip the agents prompt and use the provided value(s) |
 | `--repo-type <type>` | `single`, `monorepo` | Skip the repo type prompt and use the provided value |
+| `--worktree-repository <url>` | any git URL | Enable worktree workflow; saves URL as `"worktree-repository"` in `.osddtrc` |
 | `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
 
-Both flags are optional. Providing neither runs the fully interactive mode. Providing both skips all prompts.
+All flags are optional. Providing neither runs the fully interactive mode. When `--worktree-repository` is provided, environment checks run and `.osddt-worktrees` is initialised.
 
 ### Command Templates
 
 Templates are generated by `npx @dezkareid/osddt setup` and placed in each agent's commands directory. Each template corresponds to a step in the spec-driven workflow.
 
-| Template           | Description                                                        |
-| ------------------ | ------------------------------------------------------------------ |
-| `osddt.continue`   | Detect the current workflow phase and prompt the next command      |
-| `osddt.research`   | Research a topic and write a research file to inform the spec      |
-| `osddt.start`           | Start a new feature by creating a branch and working-on folder     |
-| `osddt.start-worktree`  | Start a new feature using a git worktree for parallel development  |
-| `osddt.spec`            | Analyze requirements and write a feature specification             |
-| `osddt.clarify`    | Resolve open questions in the spec and record decisions (optional) |
-| `osddt.plan`       | Create a technical implementation plan from a specification        |
-| `osddt.tasks`      | Generate actionable tasks from an implementation plan              |
-| `osddt.implement`  | Execute tasks from the task list one by one                        |
-| `osddt.fast`       | Bootstrap all planning artifacts (spec, plan, tasks) in one shot   |
-| `osddt.done`       | Resolve project path, verify tasks, and move the feature to done   |
+| Template         | Description                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `osddt.continue` | Detect the current workflow phase and prompt the next command                            |
+| `osddt.research` | Research a topic and write a research file to inform the spec                            |
+| `osddt.start`    | Start a new feature — uses standard or worktree workflow based on `.osddtrc`             |
+| `osddt.spec`     | Analyze requirements and write a feature specification                                   |
+| `osddt.clarify`  | Resolve open questions in the spec and record decisions (optional)                       |
+| `osddt.plan`     | Create a technical implementation plan from a specification                              |
+| `osddt.tasks`    | Generate actionable tasks from an implementation plan                                    |
+| `osddt.implement`| Execute tasks from the task list one by one                                              |
+| `osddt.fast`     | Bootstrap all planning artifacts (spec, plan, tasks) in one shot                         |
+| `osddt.done`     | Resolve project path, verify tasks, and move the feature to done                         |
 
 #### Template Workflow
 
@@ -261,18 +262,16 @@ Templates are generated by `npx @dezkareid/osddt setup` and placed in each agent
 
 ##### Example D — Parallel feature workflow (git worktree)
 
-Use `osddt.start-worktree` to work on multiple features simultaneously. Each feature gets its own isolated directory (a git worktree), so you can keep multiple editor windows open without switching branches.
-
-Before using worktrees for the first time, validate your environment:
+Enable worktree mode once during setup by providing the repository URL:
 
 ```bash
-npx @dezkareid/osddt setup-worktree
+npx @dezkareid/osddt setup --agents claude --repo-type single --worktree-repository https://github.com/org/repo.git
 ```
 
-Then start a feature in its own worktree:
+From that point on, `/osddt.start` automatically uses the worktree workflow:
 
 ```
-/osddt.start-worktree add-payment-gateway
+/osddt.start add-payment-gateway
 /osddt.spec
 /osddt.plan use Stripe SDK, REST endpoints
 /osddt.tasks
@@ -285,7 +284,7 @@ The worktree is created as a sibling of the repo root (e.g. `../my-repo-add-paym
 You can customise the worktree base directory via `worktreeBase` in `.osddtrc`:
 
 ```json
-{ "repoType": "single", "worktreeBase": "/Users/me/worktrees" }
+{ "repoType": "single", "worktree-repository": "https://github.com/org/repo.git", "worktreeBase": "/Users/me/worktrees" }
 ```
 
 ---
@@ -315,13 +314,16 @@ You can customise the worktree base directory via `worktreeBase` in `.osddtrc`:
 
 - **Input**: Either a human-readable feature description (e.g. `"Add user authentication"`) or an existing branch name (e.g. `feat/add-user-auth`).
 - **Branch name resolution**: input is used as-is if it looks like a branch name; otherwise a name is derived (lowercased, hyphens, prefixed with `feat/`), subject to the 30-character feature name limit.
-- **Actions performed by the agent**:
+- **Workflow mode**: determined by reading `.osddtrc`. If `"worktree-repository"` is present, the worktree workflow is used; otherwise the standard branch workflow is used. The user is never prompted to choose.
+- **Standard workflow** (no `"worktree-repository"` in `.osddtrc`):
   1. Checks for an existing branch — offers **Resume** (`git checkout`) or **Abort** if found, otherwise runs `git checkout -b <branch-name>`.
-  2. Reads `.osddtrc` to resolve the project path (single vs monorepo).
-  3. Checks for an existing `working-on/<feature-name>/` folder — offers **Resume** or **Abort** if found, otherwise creates it.
-  4. Reports the branch and working directory, then shows a context-aware next step:
-     - If input was a **human-readable description**: informs the user their description will be used as the starting point for the spec and suggests running `/osddt.spec` (with an optional-context note).
-     - If input was a **branch name** (or no arguments): prompts the user to run `/osddt.spec` with an optional-context note.
+  2. Checks for an existing `working-on/<feature-name>/` folder — offers **Resume** or **Abort** if found, otherwise creates it.
+  3. Reports the branch and working directory.
+- **Worktree workflow** (`"worktree-repository"` present in `.osddtrc`):
+  1. Derives the branch and feature name.
+  2. Runs `npx @dezkareid/osddt start-worktree <feature-name> [--dir <package-path>]`.
+  3. Navigates into the created worktree directory to locate the project root.
+  4. Reports the branch, worktree path, project root, and working directory.
 
 #### osddt.research behaviour
 
@@ -342,17 +344,6 @@ You can customise the worktree base directory via `worktreeBase` in `.osddtrc`:
   3. Informs the user of any already-resolved questions and only asks the remaining unanswered ones.
   4. Records all new answers in a `## Decisions` section of `osddt.spec.md` and removes each answered question from the **Open Questions** section (removing the section heading too if it becomes empty).
   5. Always prompts the user to run (or re-run) `osddt.plan` to reflect the updated decisions.
-
-#### osddt.start-worktree behaviour
-
-- **Input**: Either a human-readable feature description or an existing branch name.
-- **Branch name resolution**: same rules as `osddt.start`.
-- **Actions performed by the agent**:
-  1. Derives the branch and feature name.
-  2. Runs `npx @dezkareid/osddt start-worktree <feature-name> [--dir <package-path>]`.
-  3. The CLI creates the git worktree as a sibling of the repo root (`../<repo-name>-<feature-name>`, overridable via `worktreeBase` in `.osddtrc`), scaffolds `working-on/<feature-name>/` inside the worktree, and writes an entry to `.osddt-worktrees` (sibling to repo root).
-  4. Reports the branch, worktree path, and working directory.
-  5. Next step: `/osddt.spec`.
 
 #### osddt.done behaviour
 

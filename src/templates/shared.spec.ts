@@ -136,17 +136,16 @@ describe('getNextStepToSpec', () => {
 });
 
 describe('COMMAND_DEFINITIONS', () => {
-  it('should define exactly 11 commands', () => {
-    expect(COMMAND_DEFINITIONS).toHaveLength(11);
+  it('should define exactly 10 commands', () => {
+    expect(COMMAND_DEFINITIONS).toHaveLength(10);
   });
 
-  it('should list commands with osddt.continue first, then entry points (including start-worktree), then the rest of the workflow', () => {
+  it('should list commands with osddt.continue first, then entry points, then the rest of the workflow', () => {
     const names = COMMAND_DEFINITIONS.map(c => c.name);
     expect(names).toEqual([
       'osddt.continue',
       'osddt.research',
       'osddt.start',
-      'osddt.start-worktree',
       'osddt.spec',
       'osddt.clarify',
       'osddt.plan',
@@ -285,9 +284,8 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.description).toBeTruthy();
     });
 
-    it('should include the repo preamble with the provided npx command', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getRepoPreamble('npx osddt'));
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(getRepoPreamble('npx @dezkareid/osddt'));
+    it('should include the meta-info step', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt meta-info');
     });
 
     it('should include the $ARGUMENTS placeholder in its body', () => {
@@ -298,70 +296,28 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('feat/<derived-name>');
     });
 
-    it('should instruct using input as-is when it looks like a branch name', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('use it as-is');
-    });
-
-    it('should instruct creating the git branch', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('git checkout -b');
-    });
-
-    it('should explain feature-name derivation from branch name', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('last segment of the branch name');
-    });
-
     it('should apply feature name constraints', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Maximum length: 30 characters');
     });
 
-    it('should warn and offer Resume or Abort when branch already exists', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('already exists');
-      expect(body).toContain('Resume');
-      expect(body).toContain('Abort');
+    it('should branch on worktree-repository field presence', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('worktree-repository');
     });
 
-    it('should include the shared working directory check step', () => {
+    it('should include the worktree workflow path using start-worktree CLI', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt start-worktree');
+    });
+
+    it('should include the standard workflow path using git checkout -b', () => {
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('git checkout -b');
+    });
+
+    it('should include the shared working directory check step in the standard path', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(WORKING_DIR_STEP);
     });
 
     it('should include the next step to spec in the body', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain(getNextStepToSpec('$ARGUMENTS'));
-    });
-
-    it('should include the custom context step for "start"', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('npx osddt context start');
-    });
-  });
-
-  describe('osddt.start-worktree', () => {
-    const cmd = COMMAND_DEFINITIONS.find(c => c.name === 'osddt.start-worktree')!;
-
-    it('should have a description', () => {
-      expect(cmd.description).toBeTruthy();
-    });
-
-    it('should include the repo preamble', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getRepoPreamble('npx osddt'));
-    });
-
-    it('should instruct calling the start-worktree CLI command', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('npx osddt start-worktree');
-    });
-
-    it('should include the --dir flag for monorepo usage', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('--dir');
-    });
-
-    it('should include the feature name rules', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('Maximum length: 30 characters');
-    });
-
-    it('should include the next step to spec', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain('/osddt.spec');
+      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(getNextStepToSpec('$ARGUMENTS'));
     });
 
     it('should include the custom context step for "start"', () => {

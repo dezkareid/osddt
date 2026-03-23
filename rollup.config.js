@@ -12,5 +12,5 @@ export default {
       tsconfig: './tsconfig.build.json',
     }),
   ],
-  external: ['commander', 'fs-extra', 'path', 'fs', 'url', 'child_process', 'readline', '@inquirer/select', '@inquirer/checkbox'],
+  external: ['commander', 'fs-extra', 'path', 'fs', 'url', 'child_process', 'readline', '@inquirer/select', '@inquirer/checkbox', '@inquirer/input'],
 };

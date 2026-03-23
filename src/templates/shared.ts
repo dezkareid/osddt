@@ -9,15 +9,22 @@ ${npxCommand} meta-info
 
 ## Repository Configuration
 
-Before proceeding, read the \`.osddtrc\` file in the root of the repository to determine the project path.
+Before proceeding, read the \`.osddtrc\` file in the root of the repository to determine the project path and workflow mode.
 
 \`\`\`json
-// .osddtrc example
-{ "repoType": "monorepo" | "single" }
+// standard mode
+{ "repoType": "monorepo" | "single", "agents": ["claude"] }
+
+// worktree mode — "worktree-repository" presence determines the workflow
+{ "repoType": "monorepo" | "single", "agents": ["claude"], "worktree-repository": "https://github.com/org/repo.git" }
 \`\`\`
 
 - If \`repoType\` is \`"single"\`: the project path is the repository root.
 - If \`repoType\` is \`"monorepo"\`: ask the user which package to work on (e.g. \`packages/my-package\`), then use \`<repo-root>/<package>\` as the project path.
+- If \`"worktree-repository"\` is **present**: once the feature name is known, run \`${npxCommand} worktree-info <feature-name>\` to resolve the working directory:
+  - exit code **0**: parse the JSON and use the returned \`workingDir\` as the working directory.
+  - exit code **1**: the feature is not yet in a worktree — proceed as standard.
+- If \`"worktree-repository"\` is **absent**: use the standard project path from \`.osddtrc\`.
 
 ## Working Directory
 
@@ -131,15 +138,6 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
 
 ## Instructions
 
-Before checking the working directory, run the following command to check whether this feature uses a git worktree:
-
-\`\`\`
-${npxCommand} worktree-info <feature-name>
-\`\`\`
-
-- If it exits with code **0**: parse the JSON output and use the returned \`workingDir\` as \`<project-path>/working-on/<feature-name>\`. Skip the main-tree scan below.
-- If it exits with code **1**: the feature is not a worktree feature. Use the standard project path from \`.osddtrc\` and scan the main tree as usual.
-
 Check the working directory \`<project-path>/working-on/<feature-name>\` for the files listed below **in order** to determine the current phase. Use the first matching condition:
 
 | Condition | Current phase | Run next |
@@ -178,7 +176,9 @@ ${FEATURE_NAME_RULES}
 
 Once the feature name is determined:
 
-3. ${WORKING_DIR_STEP}
+3. Resolve the working directory:
+   - If \`"worktree-repository"\` is present in \`.osddtrc\`: run \`${npxCommand} worktree-info <feature-name>\` and use the returned \`workingDir\` if it exits with code 0; otherwise fall through to the standard path.
+   - Otherwise: ${WORKING_DIR_STEP}
 
 4. Research the topic thoroughly:
    - Explore the existing codebase for relevant patterns, conventions, and prior art
@@ -220,7 +220,37 @@ Apply the constraints below to the feature name (the segment after the last \`/\
 
 ${FEATURE_NAME_RULES}
 
-Once the branch name is determined:
+Once the branch name is determined, choose the workflow based on \`.osddtrc\`:
+
+---
+
+### If \`worktree-repository\` is **present** — Worktree workflow
+
+3. Run the following command to create the git worktree, scaffold the working directory, and register the feature in the state file:
+
+\`\`\`
+${npxCommand} start-worktree <feature-name>
+\`\`\`
+
+For monorepos, pass the package path:
+
+\`\`\`
+${npxCommand} start-worktree <feature-name> --dir <package-path>
+\`\`\`
+
+4. Parse the command output to extract \`worktreePath\` and \`workingDir\`.
+
+5. Navigate into the worktree directory to locate the project:
+   - Enter \`<worktreePath>\` — this is the isolated git worktree for this feature.
+   - If \`repoType\` is \`"single"\`: the project root is \`<worktreePath>\`.
+   - If \`repoType\` is \`"monorepo"\`: the project root is \`<worktreePath>/<package-path>\`.
+   - The planning files will live under \`<workingDir>\` (i.e. \`<project-root>/working-on/<feature-name>/\`).
+
+6. Report the branch name, worktree path, project root, and working directory.
+
+---
+
+### If \`worktree-repository\` is **absent** — Standard workflow
 
 3. Check whether the branch already exists locally or remotely:
    - If it **does not exist**, create and switch to it:
@@ -237,44 +267,7 @@ Where \`<feature-name>\` is the last segment of the branch name (after the last 
 
 5. Report the branch name and working directory that were created or resumed.
 
-${getCustomContextStep(npxCommand, 'start')}## Arguments
-
-${args}
-
-${getNextStepToSpec(args)}
-`,
-  },
-  {
-    name: 'osddt.start-worktree',
-    description: 'Start a new feature using a git worktree for parallel development',
-    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}## Instructions
-
-The argument provided is: ${args}
-
-Determine the branch name using the following logic:
-
-1. If ${args} looks like a branch name (e.g. \`feat/my-feature\`, \`fix/some-bug\`, \`my-feature-branch\` — no spaces, kebab-case or slash-separated), use it as-is.
-2. Otherwise treat ${args} as a human-readable feature description, convert it to a feature name, and use the format \`feat/<derived-name>\` as the branch name.
-
-Apply the constraints below to the feature name (the segment after the last \`/\`) before using it:
-
-${FEATURE_NAME_RULES}
-
-Once the branch name is determined:
-
-3. Run the following command to create the git worktree, scaffold the working directory, and register the feature in the state file:
-
-\`\`\`
-${npxCommand} start-worktree <feature-name>
-\`\`\`
-
-For monorepos, pass the package path:
-
-\`\`\`
-${npxCommand} start-worktree <feature-name> --dir <package-path>
-\`\`\`
-
-4. Report the branch name, worktree path, and working directory shown in the command output.
+---
 
 ${getCustomContextStep(npxCommand, 'start')}## Arguments
 
@@ -493,6 +486,26 @@ Apply the constraints below to the feature name (the segment after the last \`/\
 ${FEATURE_NAME_RULES}
 
 ### Step 2 — Create branch and working directory
+
+Choose the workflow based on \`.osddtrc\`:
+
+#### If \`worktree-repository\` is **present** — Worktree workflow
+
+3. Run the following command to create the git worktree, scaffold the working directory, and register the feature in the state file:
+
+\`\`\`
+${npxCommand} start-worktree <feature-name>
+\`\`\`
+
+For monorepos, pass the package path:
+
+\`\`\`
+${npxCommand} start-worktree <feature-name> --dir <package-path>
+\`\`\`
+
+4. Parse the command output to extract \`worktreePath\` and \`workingDir\`. Navigate into \`<worktreePath>\` to locate the project root.
+
+#### If \`worktree-repository\` is **absent** — Standard workflow
 
 3. Check whether the branch already exists locally or remotely:
    - If it **does not exist**, create and switch to it:

@@ -7,6 +7,7 @@ Other spec driven development tool but for monorepo
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `@dezkareid/osddt setup`                                                         | Generate agent command files for Claude and Gemini            |
 | `@dezkareid/osddt setup --agents <list> --repo-type <type>`                      | Non-interactive setup (for CI/scripted environments)          |
+| `@dezkareid/osddt setup --worktree-repository <url>`                             | Setup with worktree workflow enabled                          |
 | `@dezkareid/osddt meta-info`                                                     | Output current branch and date as JSON                        |
 | `@dezkareid/osddt done <feature-name> --dir <project-path>`                      | Move `working-on/<feature>` to `done/<feature>`               |
 | `@dezkareid/osddt done <feature-name> --dir <project-path> --worktree`           | Archive feature, remove git worktree, and clean state file    |
@@ -14,7 +15,6 @@ Other spec driven development tool but for monorepo
 | `@dezkareid/osddt start-worktree <feature-name>`                                 | Create a git worktree for a feature and scaffold working-on/  |
 | `@dezkareid/osddt start-worktree <feature-name> --dir <package-path>`            | Same, specifying the package path in a monorepo               |
 | `@dezkareid/osddt worktree-info <feature-name>`                                  | Look up worktree paths for a feature (JSON output)            |
-| `@dezkareid/osddt setup-worktree`                                                | Validate environment for git worktree usage                   |
 
 ### `osddt setup` options
 
@@ -22,11 +22,20 @@ Other spec driven development tool but for monorepo
 | ---- | ------ | ----------- |
 | `--agents <list>` | `claude`, `gemini` (comma-separated) | Skip the agents prompt and use the provided value(s) |
 | `--repo-type <type>` | `single`, `monorepo` | Skip the repo type prompt and use the provided value |
+| `--worktree-repository <url>` | any git URL | Enable worktree workflow and save the repository URL |
 | `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
 
-Both flags are optional. Providing neither runs the fully interactive mode. Providing both skips all prompts.
+All flags are optional. Providing neither runs the fully interactive mode. Providing `--agents` and `--repo-type` together skips all standard prompts. Adding `--worktree-repository` also runs environment checks and initialises the worktree state file.
 
-The selected agents are saved in `.osddtrc` alongside `repoType` so that `osddt update` can regenerate the correct files without prompting.
+The selected agents and config are saved in `.osddtrc` so that `osddt update` can regenerate the correct files without prompting.
+
+```json
+// Standard mode
+{ "repoType": "single", "agents": ["claude"] }
+
+// Worktree mode — the "worktree-repository" field enables the worktree workflow
+{ "repoType": "single", "agents": ["claude"], "worktree-repository": "https://github.com/org/repo.git" }
+```
 
 ```bash
 # Interactive (default)
@@ -113,18 +122,16 @@ flowchart LR
 
 #### Parallel feature workflow (git worktree)
 
-Use `osddt.start-worktree` when you want to work on multiple features simultaneously. Each feature gets its own isolated directory so you can keep multiple editor windows open without switching branches.
-
-Before using worktrees for the first time, validate your environment:
+Enable worktree mode by providing the repository URL during setup:
 
 ```bash
-npx @dezkareid/osddt setup-worktree
+npx @dezkareid/osddt setup --agents claude --repo-type single --worktree-repository https://github.com/org/repo.git
 ```
 
-Then start a feature in its own worktree:
+This saves `"worktree-repository"` in `.osddtrc`, runs environment checks, and initialises the `.osddt-worktrees` state file. From that point on, `/osddt.start` automatically uses the worktree workflow:
 
 ```
-/osddt.start-worktree add-payment-gateway
+/osddt.start add-payment-gateway
 /osddt.spec
 /osddt.plan use Stripe SDK, REST endpoints
 /osddt.tasks
@@ -139,11 +146,14 @@ You can customise the worktree base directory by adding `worktreeBase` to `.osdd
 ```json
 {
   "repoType": "single",
+  "worktree-repository": "https://github.com/org/repo.git",
   "worktreeBase": "/Users/me/worktrees"
 }
 ```
 
 Active worktrees are tracked in `.osddt-worktrees` (sibling to the repo root), a JSON array with entries containing `featureName`, `branch`, `worktreePath`, `workingDir`, and `repoRoot`. This file is the single source of truth used by `osddt.continue` and `osddt.done` to resolve the correct paths.
+
+> **Migration note**: If you previously used `osddt setup-worktree` or `/osddt.start-worktree`, those commands have been removed. Re-run `osddt setup --worktree-repository <url>` to configure the new unified workflow. Manually delete any `osddt.start-worktree.*` files from your agent command directories — `osddt update` will not regenerate them.
 
 #### Resuming after closing a session
 
@@ -157,19 +167,18 @@ Active worktrees are tracked in `.osddt-worktrees` (sibling to the repo root), a
 /osddt.done
 ```
 
-| Template                | Description                                                        |
-| ----------------------- | ------------------------------------------------------------------ |
-| `osddt.continue`        | Detect the current workflow phase and prompt the next command      |
-| `osddt.research`        | Research a topic and write a research file to inform the spec      |
-| `osddt.start`           | Start a new feature by creating a branch and working-on folder     |
-| `osddt.start-worktree`  | Start a new feature using a git worktree for parallel development  |
-| `osddt.spec`            | Analyze requirements and write a feature specification             |
-| `osddt.clarify`         | Resolve open questions in the spec and record decisions (optional) |
-| `osddt.plan`            | Create a technical implementation plan from a specification        |
-| `osddt.tasks`           | Generate actionable tasks from an implementation plan              |
-| `osddt.implement`       | Execute tasks from the task list one by one                        |
-| `osddt.fast`            | Bootstrap all planning artifacts (spec, plan, tasks) in one shot   |
-| `osddt.done`            | Resolve project path, verify tasks, and move the feature to done   |
+| Template         | Description                                                        |
+| ---------------- | ------------------------------------------------------------------ |
+| `osddt.continue` | Detect the current workflow phase and prompt the next command      |
+| `osddt.research` | Research a topic and write a research file to inform the spec      |
+| `osddt.start`    | Start a new feature — uses standard or worktree workflow based on `.osddtrc` |
+| `osddt.spec`     | Analyze requirements and write a feature specification             |
+| `osddt.clarify`  | Resolve open questions in the spec and record decisions (optional) |
+| `osddt.plan`     | Create a technical implementation plan from a specification        |
+| `osddt.tasks`    | Generate actionable tasks from an implementation plan              |
+| `osddt.implement`| Execute tasks from the task list one by one                        |
+| `osddt.fast`     | Bootstrap all planning artifacts (spec, plan, tasks) in one shot   |
+| `osddt.done`     | Resolve project path, verify tasks, and move the feature to done   |
 
 Generated files are placed in:
 
