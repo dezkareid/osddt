@@ -134,7 +134,27 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: 'osddt.continue',
     description: 'Detect the current workflow phase and prompt the next command to run',
-    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}${RESOLVE_FEATURE_NAME}
+    body: ({ args, npxCommand }) => `${getRepoPreamble(npxCommand)}### Resolving the Feature Name and Working Directory
+
+Use the following logic to determine the working directory:
+
+**If \`worktree-repository\` is present in \`.osddtrc\` (worktree mode):**
+
+1. If arguments were provided, derive the feature name from them:
+   - If the argument looks like a branch name (no spaces, kebab-case or slash-separated), use the last segment (after the last \`/\`, or the full value if no \`/\` is present).
+   - Otherwise convert it to a feature name following the Feature Name Constraints.
+2. Run \`${npxCommand} worktree-info\` (pass \`<feature-name>\` as argument if one was derived, otherwise run without arguments):
+   - exit code **0**: parse the JSON and use the returned \`workingDir\` as the working directory.
+   - exit code **1**: no matching worktree found — fall back to the standard resolution below.
+
+**If \`worktree-repository\` is absent in \`.osddtrc\` (standard mode), or after a worktree-info fallback:**
+
+1. If arguments were provided, derive the feature name (same rules as above).
+2. If **no arguments were provided**:
+   - List all folders under \`<project-path>/working-on/\`.
+   - If there is **only one folder**, use it automatically and inform the user.
+   - If there are **multiple folders**, present the list to the user and ask them to pick one.
+   - If there are **no folders**, inform the user that no in-progress features were found and stop.
 
 ## Instructions
 

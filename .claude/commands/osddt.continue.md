@@ -35,13 +35,22 @@ All generated files live under `<project-path>/working-on/<feature-name>/`.
 
 > All file paths in the instructions below are relative to `<project-path>/working-on/<feature-name>/`.
 
-### Resolving the Feature Name
+### Resolving the Feature Name and Working Directory
 
-Use the following logic to determine `<feature-name>`:
+Use the following logic to determine the working directory:
+
+**If `worktree-repository` is present in `.osddtrc` (worktree mode):**
 
 1. If arguments were provided, derive the feature name from them:
    - If the argument looks like a branch name (no spaces, kebab-case or slash-separated), use the last segment (after the last `/`, or the full value if no `/` is present).
-   - Otherwise treat it as a human-readable description and convert it to a feature name following the constraints in the Feature Name Constraints section.
+   - Otherwise convert it to a feature name following the Feature Name Constraints.
+2. Run `npx osddt worktree-info` (pass `<feature-name>` as argument if one was derived, otherwise run without arguments):
+   - exit code **0**: parse the JSON and use the returned `workingDir` as the working directory.
+   - exit code **1**: no matching worktree found — fall back to the standard resolution below.
+
+**If `worktree-repository` is absent in `.osddtrc` (standard mode), or after a worktree-info fallback:**
+
+1. If arguments were provided, derive the feature name (same rules as above).
 2. If **no arguments were provided**:
    - List all folders under `<project-path>/working-on/`.
    - If there is **only one folder**, use it automatically and inform the user.

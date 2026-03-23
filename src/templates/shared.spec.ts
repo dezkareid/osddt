@@ -168,8 +168,17 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(getRepoPreamble('npx @dezkareid/osddt'));
     });
 
-    it('should include the feature name resolution step', () => {
-      expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(RESOLVE_FEATURE_NAME);
+    it('should instruct using worktree-info when worktree-repository is present (worktree mode)', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('worktree-repository` is present');
+      expect(body).toContain('npx osddt worktree-info');
+    });
+
+    it('should instruct listing working-on/ folders in standard mode or after worktree-info fallback', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      expect(body).toContain('worktree-repository` is absent');
+      expect(body).toContain('working-on/');
+      expect(body).toContain('no arguments were provided');
     });
 
     it('should detect the implementing phase from osddt.tasks.md with unchecked tasks', () => {
