@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import path from 'path';
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
-import type { WorktreeEntry } from './start-worktree.js';
+import { resolveBarePath, findWorktreeByFeature } from '../utils/worktree.js';
 
 function todayPrefix(): string {
   const now = new Date();
@@ -10,19 +10,6 @@ function todayPrefix(): string {
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
-}
-
-async function resolveRepoRoot(cwd: string): Promise<string> {
-  const rcPath = path.join(cwd, '.osddtrc');
-  if (await fs.pathExists(rcPath)) {
-    const rc = await fs.readJson(rcPath) as { 'bare-path'?: string };
-    if (rc['bare-path']) return rc['bare-path'];
-  }
-  return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
-}
-
-function stateFilePath(repoRoot: string): string {
-  return path.join(path.dirname(repoRoot), '.osddt-worktrees');
 }
 
 async function runDone(featureName: string, cwd: string, worktree: boolean): Promise<void> {
@@ -41,33 +28,21 @@ async function runDone(featureName: string, cwd: string, worktree: boolean): Pro
 
   if (!worktree) return;
 
-  const repoRoot = await resolveRepoRoot(process.cwd());
-  const stateFile = stateFilePath(repoRoot);
+  const barePath = await resolveBarePath(process.cwd());
+  const worktreePath = findWorktreeByFeature(barePath, featureName);
 
-  if (!(await fs.pathExists(stateFile))) {
-    console.error(`Warning: .osddt-worktrees not found at ${stateFile}. Skipping worktree cleanup.`);
+  if (!worktreePath) {
+    console.error(`Warning: No worktree found for "${featureName}". Skipping worktree cleanup.`);
     return;
   }
 
-  const entries = await fs.readJson(stateFile) as WorktreeEntry[];
-  const entry = entries.find(e => e.featureName === featureName);
-
-  if (!entry) {
-    console.error(`Warning: No worktree entry found for "${featureName}". Skipping worktree cleanup.`);
-    return;
-  }
-
-  if (await fs.pathExists(entry.worktreePath)) {
-    execSync(`git worktree remove "${entry.worktreePath}" --force`, { cwd: repoRoot, stdio: 'inherit' });
-    console.log(`Removed worktree: ${entry.worktreePath}`);
+  if (await fs.pathExists(worktreePath)) {
+    execSync(`git worktree remove "${worktreePath}" --force`, { cwd: barePath, stdio: 'inherit' });
+    console.log(`Removed worktree: ${worktreePath}`);
   }
   else {
     console.log(`Worktree path not found on filesystem, skipping git worktree remove.`);
   }
-
-  const updated = entries.filter(e => e.featureName !== featureName);
-  await fs.writeJson(stateFile, updated, { spaces: 2 });
-  console.log(`Removed state entry for "${featureName}" from .osddt-worktrees`);
 }
 
 export function doneCommand(): Command {
@@ -77,7 +52,7 @@ export function doneCommand(): Command {
     .description('Move a feature from working-on/<feature-name> to done/<feature-name>')
     .argument('<feature-name>', 'name of the feature to mark as done')
     .option('-d, --dir <directory>', 'project directory', process.cwd())
-    .option('--worktree', 'also remove the git worktree and clean up the state file')
+    .option('--worktree', 'also remove the git worktree')
     .action(async (featureName: string, options: { dir: string; worktree?: boolean }) => {
       const targetDir = path.resolve(options.dir);
       await runDone(featureName, targetDir, options.worktree ?? false);

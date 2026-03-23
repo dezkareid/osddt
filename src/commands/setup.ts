@@ -5,7 +5,7 @@ import { execSync } from 'child_process';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
 import { askRepoType, askAgents, askWorktreeUrl, type RepoType, type AgentType } from '../utils/prompt.js';
-import { runWorktreeChecks, initStateFile } from '../utils/worktree.js';
+import { runWorktreeChecks } from '../utils/worktree.js';
 
 const CANONICAL_PACKAGE_NAME = '@dezkareid/osddt';
 const NPX_COMMAND = 'npx osddt';
@@ -33,6 +33,7 @@ interface OsddtConfig {
   'agents': AgentType[];
   'worktree-repository'?: string;
   'bare-path'?: string;
+  'packageManager'?: string;
 }
 
 interface SetupOptions {
@@ -99,7 +100,7 @@ async function writeAgentFiles(cwd: string, agents: AgentType[], npxCommand: str
   }
 }
 
-function cloneBareRepository(cwd: string, repositoryUrl: string): string {
+export function cloneBareRepository(cwd: string, repositoryUrl: string): string {
   const barePath = path.join(cwd, '.bare');
   console.log(`Cloning bare repository into ${barePath} ...\n`);
   execSync(`git clone --bare "${repositoryUrl}" "${barePath}"`, { stdio: 'inherit' });
@@ -107,8 +108,58 @@ function cloneBareRepository(cwd: string, repositoryUrl: string): string {
   return barePath;
 }
 
-async function setupWorktreeEnvironment(cwd: string, worktreeRepository: string): Promise<string> {
+export function detectDefaultBranch(barePath: string): string {
+  const output = execSync('git remote show origin', { cwd: barePath, encoding: 'utf-8' });
+  const match = output.match(/HEAD branch:\s*(\S+)/);
+  if (match) return match[1];
+  // fallback: try main then master
+  try {
+    execSync('git rev-parse --verify main', { cwd: barePath, stdio: 'ignore' });
+    return 'main';
+  }
+  catch {
+    return 'master';
+  }
+}
+
+export function addDefaultBranchWorktree(barePath: string, branch: string): void {
+  const worktreePath = path.join(barePath, branch);
+  execSync(`git worktree add "${worktreePath}" ${branch}`, { cwd: barePath, stdio: 'inherit' });
+}
+
+export async function detectPackageManager(worktreePath: string): Promise<string> {
+  if (await fs.pathExists(path.join(worktreePath, 'pnpm-lock.yaml'))) return 'pnpm';
+  if (await fs.pathExists(path.join(worktreePath, 'yarn.lock'))) return 'yarn';
+  if (await fs.pathExists(path.join(worktreePath, 'package-lock.json'))) return 'npm';
+  return 'npm';
+}
+
+export async function writeAgentPointerFiles(cwd: string, agents: AgentType[], branch: string): Promise<void> {
+  if (agents.includes('claude')) {
+    const filePath = path.join(cwd, 'CLAUDE.md');
+    await fs.writeFile(filePath, `@.bare/${branch}/CLAUDE.md\n`, 'utf-8');
+    console.log(`  Created: ${filePath}`);
+  }
+  if (agents.includes('gemini')) {
+    const filePath = path.join(cwd, 'GEMINI.md');
+    await fs.writeFile(filePath, `@.bare/${branch}/GEMINI.md\n`, 'utf-8');
+    console.log(`  Created: ${filePath}`);
+  }
+}
+
+async function setupWorktreeEnvironment(
+  cwd: string,
+  worktreeRepository: string,
+  agents: AgentType[],
+): Promise<{ barePath: string; packageManager: string }> {
   const barePath = cloneBareRepository(cwd, worktreeRepository);
+
+  const branch = detectDefaultBranch(barePath);
+  addDefaultBranchWorktree(barePath, branch);
+
+  const worktreePath = path.join(barePath, branch);
+  const packageManager = await detectPackageManager(worktreePath);
+
   console.log('Checking environment for git worktree support...\n');
   const allPassed = await runWorktreeChecks(barePath);
   console.log('');
@@ -116,9 +167,11 @@ async function setupWorktreeEnvironment(cwd: string, worktreeRepository: string)
     console.log('Some checks failed. Resolve the issues above before using the worktree workflow.');
     process.exit(1);
   }
-  await initStateFile(barePath);
+
+  await writeAgentPointerFiles(cwd, agents, branch);
   console.log('');
-  return barePath;
+
+  return { barePath, packageManager };
 }
 
 async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, rawWorktreeRepository?: string): Promise<void> {
@@ -135,8 +188,9 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, r
   if (rawWorktreeRepository === undefined) console.log('');
 
   let barePath: string | undefined;
+  let packageManager: string | undefined;
   if (worktreeRepository) {
-    barePath = await setupWorktreeEnvironment(cwd, worktreeRepository);
+    ({ barePath, packageManager } = await setupWorktreeEnvironment(cwd, worktreeRepository, agents));
   }
 
   const npxCommand = await resolveNpxCommand(cwd);
@@ -147,6 +201,7 @@ async function runSetup(cwd: string, rawAgents?: string, rawRepoType?: string, r
   const config: OsddtConfig = { repoType, agents };
   if (worktreeRepository) config['worktree-repository'] = worktreeRepository;
   if (barePath) config['bare-path'] = barePath;
+  if (packageManager) config['packageManager'] = packageManager;
   await writeConfig(cwd, config);
 
   console.log('\nSetup complete!');

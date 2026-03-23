@@ -8,7 +8,8 @@ import { execSync } from 'child_process';
 import {
   checkGitVersion,
   checkTargetWritable,
-  initStateFile,
+  resolveBarePath,
+  findWorktreeByFeature,
 } from './worktree.js';
 
 const mockedExecSync = vi.mocked(execSync);
@@ -57,27 +58,58 @@ describe('checkTargetWritable', () => {
   });
 });
 
-describe('initStateFile', () => {
-  it('should create the state file in the parent of barePath when it does not exist', async () => {
-    vi.mocked(fs.pathExists).mockResolvedValue(false);
-    vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    await initStateFile('/home/user/myproject/.bare');
-
-    expect(vi.mocked(fs.writeJson)).toHaveBeenCalledWith(
-      '/home/user/myproject/.osddt-worktrees',
-      [],
-      { spaces: 2 },
-    );
+describe('resolveBarePath', () => {
+  it('should return bare-path from .osddtrc when present', async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(true as unknown as boolean);
+    vi.mocked(fs.readJson).mockResolvedValue({ 'bare-path': '/home/user/myproject/.bare' });
+    const result = await resolveBarePath('/home/user/myproject');
+    expect(result).toBe('/home/user/myproject/.bare');
+    expect(mockedExecSync).not.toHaveBeenCalled();
   });
 
-  it('should not overwrite the state file when it already exists', async () => {
+  it('should fall back to git rev-parse when .osddtrc has no bare-path', async () => {
     vi.mocked(fs.pathExists).mockResolvedValue(true as unknown as boolean);
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.mocked(fs.readJson).mockResolvedValue({ repoType: 'single' });
+    mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
+    const result = await resolveBarePath('/home/user/myrepo');
+    expect(result).toBe('/home/user/myrepo');
+  });
 
-    await initStateFile('/home/user/myproject/.bare');
+  it('should fall back to git rev-parse when .osddtrc does not exist', async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(false);
+    mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
+    const result = await resolveBarePath('/home/user/myrepo');
+    expect(result).toBe('/home/user/myrepo');
+  });
+});
 
-    expect(vi.mocked(fs.writeJson)).not.toHaveBeenCalled();
+describe('findWorktreeByFeature', () => {
+  const PORCELAIN_OUTPUT = [
+    'worktree /home/user/myproject/.bare',
+    'HEAD abc123',
+    'branch refs/heads/main',
+    '',
+    'worktree /home/user/myproject-my-feature',
+    'HEAD def456',
+    'branch refs/heads/feat/my-feature',
+    '',
+  ].join('\n');
+
+  it('should return the worktree path matching the feature name', () => {
+    mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
+    const result = findWorktreeByFeature('/home/user/myproject/.bare', 'my-feature');
+    expect(result).toBe('/home/user/myproject-my-feature');
+  });
+
+  it('should return undefined when no worktree matches', () => {
+    mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
+    const result = findWorktreeByFeature('/home/user/myproject/.bare', 'unknown-feature');
+    expect(result).toBeUndefined();
+  });
+
+  it('should not match partial feature names', () => {
+    mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
+    const result = findWorktreeByFeature('/home/user/myproject/.bare', 'feature');
+    expect(result).toBeUndefined();
   });
 });

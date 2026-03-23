@@ -40,20 +40,30 @@ export async function checkTargetWritable(barePath: string): Promise<CheckResult
   }
 }
 
-export async function initStateFile(barePath: string): Promise<void> {
-  try {
-    const stateFile = path.join(path.dirname(barePath), '.osddt-worktrees');
-    if (!(await fs.pathExists(stateFile))) {
-      await fs.writeJson(stateFile, [], { spaces: 2 });
-      console.log(`  ✓ Initialized worktree state file: ${stateFile}`);
-    }
-    else {
-      console.log(`  ✓ Worktree state file already exists: ${stateFile}`);
+export async function resolveBarePath(cwd: string): Promise<string> {
+  const rcPath = path.join(cwd, '.osddtrc');
+  if (await fs.pathExists(rcPath)) {
+    const rc = await fs.readJson(rcPath) as { 'bare-path'?: string };
+    if (rc['bare-path']) return rc['bare-path'];
+  }
+  return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
+}
+
+export function findWorktreeByFeature(barePath: string, featureName: string): string | undefined {
+  const output = execSync('git worktree list --porcelain', { cwd: barePath, encoding: 'utf-8' });
+  const blocks = output.trim().split(/\n\n+/);
+  for (const block of blocks) {
+    const match = block.match(/^worktree (.+)$/m);
+    if (!match) continue;
+    const worktreePath = match[1].trim();
+    const basename = path.basename(worktreePath);
+    const segments = basename.split('-');
+    const suffixMatch = segments.length > 1 && basename.slice(basename.indexOf('-') + 1) === featureName;
+    if (basename === featureName || suffixMatch) {
+      return worktreePath;
     }
   }
-  catch {
-    console.log('  ✗ Could not initialize worktree state file');
-  }
+  return undefined;
 }
 
 export function printCheckResult(result: CheckResult): void {

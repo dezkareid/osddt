@@ -10,19 +10,24 @@ vi.mock('../templates/gemini.js');
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
 import { askAgents, askRepoType, askWorktreeUrl } from '../utils/prompt.js';
-import { runWorktreeChecks, initStateFile } from '../utils/worktree.js';
+import { runWorktreeChecks } from '../utils/worktree.js';
 import { getClaudeTemplates } from '../templates/claude.js';
 import { getGeminiTemplates } from '../templates/gemini.js';
-import { setupCommand } from './setup.js';
+import {
+  setupCommand,
+  cloneBareRepository,
+  detectDefaultBranch,
+  addDefaultBranchWorktree,
+  detectPackageManager,
+  writeAgentPointerFiles,
+} from './setup.js';
 
 const CLAUDE_FILE = { filePath: '/tmp/project/.claude/commands/osddt.spec.md', content: '# spec' };
 const GEMINI_FILE = { filePath: '/tmp/project/.gemini/commands/osddt.spec.toml', content: 'spec' };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: no worktree URL provided interactively
   vi.mocked(askWorktreeUrl).mockResolvedValue('');
-  // Default: current directory is already a git repository
   vi.mocked(execSync).mockReturnValue(Buffer.from(''));
 });
 
@@ -38,7 +43,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
@@ -62,7 +67,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(
@@ -88,7 +93,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--agents', 'claude', '--dir', '/tmp/project'], { from: 'user' });
@@ -106,7 +111,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
@@ -125,7 +130,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--dir', '/tmp/project'], { from: 'user' });
@@ -142,7 +147,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
@@ -158,7 +163,7 @@ describe('setup command', () => {
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
@@ -169,7 +174,7 @@ describe('setup command', () => {
 
   describe('given an invalid --agents value', () => {
     it('should print an error and exit with code 1', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });
@@ -186,7 +191,7 @@ describe('setup command', () => {
 
   describe('given an invalid --repo-type value', () => {
     it('should print an error and exit with code 1', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });
@@ -202,15 +207,21 @@ describe('setup command', () => {
   });
 
   describe('given --worktree-repository is provided and all checks pass', () => {
-    it('should clone bare into .bare, write "bare-path" and "worktree-repository" to .osddtrc', async () => {
+    it('should clone bare, detect branch, add worktree, and write bare-path + packageManager to .osddtrc', async () => {
+      vi.mocked(execSync).mockImplementation((cmd: string) => {
+        if (cmd.includes('git clone')) return Buffer.from('');
+        if (cmd.includes('git remote show')) return 'HEAD branch: main\n' as unknown as Buffer;
+        if (cmd.includes('git worktree add')) return Buffer.from('');
+        return Buffer.from('');
+      });
       vi.mocked(fs.readJson).mockResolvedValue({ name: '@dezkareid/osddt' });
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(getClaudeTemplates).mockReturnValue([CLAUDE_FILE]);
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
       vi.mocked(runWorktreeChecks).mockResolvedValue(true);
-      vi.mocked(initStateFile).mockResolvedValue(undefined);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(
@@ -223,15 +234,14 @@ describe('setup command', () => {
         { stdio: 'inherit' },
       );
       expect(runWorktreeChecks).toHaveBeenCalledWith('/tmp/project/.bare');
-      expect(initStateFile).toHaveBeenCalledWith('/tmp/project/.bare');
       expect(fs.writeJson).toHaveBeenCalledWith(
         expect.stringContaining('.osddtrc'),
-        {
+        expect.objectContaining({
           'repoType': 'single',
           'agents': ['claude'],
           'worktree-repository': 'https://github.com/org/repo.git',
           'bare-path': '/tmp/project/.bare',
-        },
+        }),
         { spaces: 2 },
       );
     });
@@ -239,8 +249,15 @@ describe('setup command', () => {
 
   describe('given --worktree-repository is provided but environment checks fail', () => {
     it('should exit with code 1 and not write .osddtrc', async () => {
+      vi.mocked(execSync).mockImplementation((cmd: string) => {
+        if (cmd.includes('git clone')) return Buffer.from('');
+        if (cmd.includes('git remote show')) return 'HEAD branch: main\n' as unknown as Buffer;
+        if (cmd.includes('git worktree add')) return Buffer.from('');
+        return Buffer.from('');
+      });
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(runWorktreeChecks).mockResolvedValue(false);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });
@@ -270,7 +287,7 @@ describe('setup command', () => {
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       vi.mocked(fs.writeJson).mockResolvedValue(undefined);
       vi.mocked(askWorktreeUrl).mockResolvedValue('');
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = setupCommand();
       await cmd.parseAsync(['--agents', 'claude', '--repo-type', 'single', '--dir', '/tmp/project'], { from: 'user' });
@@ -282,5 +299,121 @@ describe('setup command', () => {
         { spaces: 2 },
       );
     });
+  });
+});
+
+describe('cloneBareRepository', () => {
+  it('should run git clone --bare into <cwd>/.bare and return barePath', () => {
+    vi.mocked(execSync).mockReturnValue(Buffer.from(''));
+    vi.spyOn(console, 'log').mockImplementation(() => { });
+    const result = cloneBareRepository('/tmp/project', 'https://github.com/org/repo.git');
+    expect(result).toBe('/tmp/project/.bare');
+    expect(execSync).toHaveBeenCalledWith(
+      'git clone --bare "https://github.com/org/repo.git" "/tmp/project/.bare"',
+      { stdio: 'inherit' },
+    );
+  });
+});
+
+describe('detectDefaultBranch', () => {
+  it('should parse HEAD branch from git remote show origin output', () => {
+    vi.mocked(execSync).mockReturnValue('  HEAD branch: main\n' as unknown as Buffer);
+    const result = detectDefaultBranch('/tmp/project/.bare');
+    expect(result).toBe('main');
+  });
+
+  it('should fall back to main when remote show output has no HEAD branch line', () => {
+    vi.mocked(execSync).mockImplementation((cmd: string) => {
+      if (cmd.includes('git remote show')) return 'no HEAD line here\n' as unknown as Buffer;
+      if (cmd.includes('rev-parse --verify main')) return Buffer.from('');
+      throw new Error('not found');
+    });
+    const result = detectDefaultBranch('/tmp/project/.bare');
+    expect(result).toBe('main');
+  });
+});
+
+describe('addDefaultBranchWorktree', () => {
+  it('should run git worktree add inside barePath for the given branch', () => {
+    vi.mocked(execSync).mockReturnValue(Buffer.from(''));
+    addDefaultBranchWorktree('/tmp/project/.bare', 'main');
+    expect(execSync).toHaveBeenCalledWith(
+      'git worktree add "/tmp/project/.bare/main" main',
+      { cwd: '/tmp/project/.bare', stdio: 'inherit' },
+    );
+  });
+});
+
+describe('detectPackageManager', () => {
+  it('should detect pnpm when pnpm-lock.yaml exists', async () => {
+    vi.mocked(fs.pathExists).mockImplementation(async p =>
+      String(p).endsWith('pnpm-lock.yaml'),
+    );
+    const result = await detectPackageManager('/tmp/project/.bare/main');
+    expect(result).toBe('pnpm');
+  });
+
+  it('should detect yarn when yarn.lock exists and no pnpm-lock.yaml', async () => {
+    vi.mocked(fs.pathExists).mockImplementation(async p =>
+      String(p).endsWith('yarn.lock'),
+    );
+    const result = await detectPackageManager('/tmp/project/.bare/main');
+    expect(result).toBe('yarn');
+  });
+
+  it('should detect npm when package-lock.json exists and no other locks', async () => {
+    vi.mocked(fs.pathExists).mockImplementation(async p =>
+      String(p).endsWith('package-lock.json'),
+    );
+    const result = await detectPackageManager('/tmp/project/.bare/main');
+    expect(result).toBe('npm');
+  });
+
+  it('should default to npm when no lockfile is found', async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(false);
+    const result = await detectPackageManager('/tmp/project/.bare/main');
+    expect(result).toBe('npm');
+  });
+});
+
+describe('writeAgentPointerFiles', () => {
+  it('should write CLAUDE.md only when claude is selected', async () => {
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => { });
+    await writeAgentPointerFiles('/tmp/project', ['claude'], 'main');
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      '/tmp/project/CLAUDE.md',
+      '@.bare/main/CLAUDE.md\n',
+      'utf-8',
+    );
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      expect.stringContaining('GEMINI.md'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('should write GEMINI.md only when gemini is selected', async () => {
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => { });
+    await writeAgentPointerFiles('/tmp/project', ['gemini'], 'main');
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      '/tmp/project/GEMINI.md',
+      '@.bare/main/GEMINI.md\n',
+      'utf-8',
+    );
+    expect(fs.writeFile).not.toHaveBeenCalledWith(
+      expect.stringContaining('CLAUDE.md'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('should write both files when both agents are selected', async () => {
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => { });
+    await writeAgentPointerFiles('/tmp/project', ['claude', 'gemini'], 'master');
+    expect(fs.writeFile).toHaveBeenCalledWith('/tmp/project/CLAUDE.md', '@.bare/master/CLAUDE.md\n', 'utf-8');
+    expect(fs.writeFile).toHaveBeenCalledWith('/tmp/project/GEMINI.md', '@.bare/master/GEMINI.md\n', 'utf-8');
   });
 });
