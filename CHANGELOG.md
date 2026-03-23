@@ -1,3 +1,10 @@
+## [1.11.6](https://github.com/dezkareid/osddt/compare/osddt-v1.11.5...osddt-v1.11.6) (2026-03-23)
+
+
+### Bug Fixes
+
+* workflow for done command in worktrees ([48e3b28](https://github.com/dezkareid/osddt/commit/48e3b28f493000e483ada4a9f3e11e2474997c41))
+
 ## [1.11.5](https://github.com/dezkareid/osddt/compare/osddt-v1.11.4...osddt-v1.11.5) (2026-03-23)
 
 
