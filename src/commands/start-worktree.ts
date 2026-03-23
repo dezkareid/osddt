@@ -60,8 +60,8 @@ async function prompt(question: string): Promise<string> {
 }
 
 interface OsddtRc {
-  repoType: 'single' | 'monorepo';
-  worktreeBase?: string;
+  'repoType': 'single' | 'monorepo';
+  'worktreeBase'?: string;
   'bare-path'?: string;
 }
 

@@ -28,7 +28,7 @@ describe('start-worktree command', () => {
         return false;
       });
       vi.mocked(fs.readJson).mockImplementation(async (p) => {
-        if (String(p).endsWith('.osddtrc')) return { repoType: 'single', 'bare-path': '/home/user/myproject/.bare' };
+        if (String(p).endsWith('.osddtrc')) return { 'repoType': 'single', 'bare-path': '/home/user/myproject/.bare' };
         return [];
       });
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
