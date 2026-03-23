@@ -13,10 +13,6 @@ export interface WorktreeEntry {
   repoRoot: string;
 }
 
-function repoName(repoRoot: string): string {
-  return path.basename(repoRoot);
-}
-
 function branchExists(branch: string, cwd: string): boolean {
   try {
     execSync(`git rev-parse --verify ${branch}`, { cwd, stdio: 'ignore' });
@@ -119,9 +115,9 @@ async function runStartWorktree(featureName: string, options: { dir?: string }):
     return;
   }
 
-  // Resolve worktree path — sibling of repoRoot (i.e. sibling of .bare)
-  const base = rc['worktreeBase'] ?? path.dirname(repoRoot);
-  const worktreePath = path.join(base, `${repoName(repoRoot)}-${featureName}`);
+  // Resolve worktree path — inside .bare as <barePath>/<featureName>
+  const base = rc['worktreeBase'] ?? repoRoot;
+  const worktreePath = path.join(base, featureName);
 
   await createWorktree(branch, worktreePath, repoRoot);
 

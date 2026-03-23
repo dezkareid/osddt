@@ -53,11 +53,11 @@ describe('done command', () => {
   describe('given --worktree flag and a matching worktree found via git worktree list', () => {
     beforeEach(() => {
       vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
-      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject-my-feature');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject/.bare/my-feature');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         const s = String(p);
         if (s.endsWith('my-feature') && s.includes('working-on')) return true;
-        if (s === '/home/user/myproject-my-feature') return true;
+        if (s === '/home/user/myproject/.bare/my-feature') return true;
         return false;
       });
       vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
@@ -86,10 +86,10 @@ describe('done command', () => {
   describe('given --worktree flag but worktree path no longer exists on filesystem', () => {
     beforeEach(() => {
       vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
-      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject-my-feature');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject/.bare/my-feature');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         const s = String(p);
-        if (s === '/home/user/myproject-my-feature') return false;
+        if (s === '/home/user/myproject/.bare/my-feature') return false;
         if (s.endsWith('my-feature') && s.includes('working-on')) return true;
         return false;
       });
