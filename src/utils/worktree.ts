@@ -29,41 +29,8 @@ export function checkGitVersion(): CheckResult {
   }
 }
 
-export function checkNotAWorktree(cwd: string): CheckResult {
-  try {
-    const gitCommonDir = execSync('git rev-parse --git-common-dir', { cwd, encoding: 'utf-8' }).trim();
-    const gitDir = execSync('git rev-parse --git-dir', { cwd, encoding: 'utf-8' }).trim();
-    const isWorktree = gitDir !== gitCommonDir && gitDir !== '.git';
-    return {
-      label: 'Current directory is not a worktree',
-      passed: !isWorktree,
-      detail: isWorktree
-        ? `This directory is itself a worktree (git-dir: ${gitDir}). Run setup from the main repository.`
-        : 'OK',
-    };
-  }
-  catch {
-    return { label: 'Current directory is not a worktree', passed: false, detail: 'Not inside a git repository' };
-  }
-}
-
-export async function checkTargetWritable(cwd: string): Promise<CheckResult> {
-  let targetBase: string;
-  try {
-    const repoRoot = execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
-    const rcPath = path.join(repoRoot, '.osddtrc');
-    if (await fs.pathExists(rcPath)) {
-      const rc = await fs.readJson(rcPath) as { worktreeBase?: string };
-      targetBase = rc.worktreeBase ?? path.dirname(repoRoot);
-    }
-    else {
-      targetBase = path.dirname(repoRoot);
-    }
-  }
-  catch {
-    return { label: 'Worktree target directory is writable', passed: false, detail: 'Could not resolve repo root' };
-  }
-
+export async function checkTargetWritable(barePath: string): Promise<CheckResult> {
+  const targetBase = path.dirname(barePath);
   try {
     await fs.access(targetBase, fs.constants.W_OK);
     return { label: 'Worktree target directory is writable', passed: true, detail: `${targetBase} is writable` };
@@ -73,10 +40,9 @@ export async function checkTargetWritable(cwd: string): Promise<CheckResult> {
   }
 }
 
-export async function initStateFile(cwd: string): Promise<void> {
+export async function initStateFile(barePath: string): Promise<void> {
   try {
-    const repoRoot = execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
-    const stateFile = path.join(path.dirname(repoRoot), '.osddt-worktrees');
+    const stateFile = path.join(path.dirname(barePath), '.osddt-worktrees');
     if (!(await fs.pathExists(stateFile))) {
       await fs.writeJson(stateFile, [], { spaces: 2 });
       console.log(`  ✓ Initialized worktree state file: ${stateFile}`);
@@ -98,11 +64,10 @@ export function printCheckResult(result: CheckResult): void {
   }
 }
 
-export async function runWorktreeChecks(cwd: string): Promise<boolean> {
+export async function runWorktreeChecks(barePath: string): Promise<boolean> {
   const results: CheckResult[] = [
     checkGitVersion(),
-    checkNotAWorktree(cwd),
-    await checkTargetWritable(cwd),
+    await checkTargetWritable(barePath),
   ];
 
   for (const result of results) {

@@ -17,7 +17,10 @@ describe('worktree-info command', () => {
   describe('given the feature exists in the state file', () => {
     beforeEach(() => {
       mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
-      vi.mocked(fs.pathExists).mockResolvedValue(true);
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        if (String(p).endsWith('.osddtrc')) return false;
+        return true;
+      });
       vi.mocked(fs.readJson).mockResolvedValue([
         {
           featureName: 'my-feature',
@@ -48,7 +51,10 @@ describe('worktree-info command', () => {
   describe('given the feature does not exist in the state file', () => {
     beforeEach(() => {
       mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
-      vi.mocked(fs.pathExists).mockResolvedValue(true);
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        if (String(p).endsWith('.osddtrc')) return false;
+        return true;
+      });
       vi.mocked(fs.readJson).mockResolvedValue([]);
     });
 

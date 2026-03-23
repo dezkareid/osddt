@@ -4,7 +4,12 @@ import fs from 'fs-extra';
 import { execSync } from 'child_process';
 import type { WorktreeEntry } from './start-worktree.js';
 
-function resolveRepoRoot(cwd: string): string {
+async function resolveRepoRoot(cwd: string): Promise<string> {
+  const rcPath = path.join(cwd, '.osddtrc');
+  if (await fs.pathExists(rcPath)) {
+    const rc = await fs.readJson(rcPath) as { 'bare-path'?: string };
+    if (rc['bare-path']) return rc['bare-path'];
+  }
   return execSync('git rev-parse --show-toplevel', { cwd, encoding: 'utf-8' }).trim();
 }
 
@@ -13,7 +18,7 @@ function stateFilePath(repoRoot: string): string {
 }
 
 async function runWorktreeInfo(featureName: string): Promise<void> {
-  const repoRoot = resolveRepoRoot(process.cwd());
+  const repoRoot = await resolveRepoRoot(process.cwd());
   const stateFile = stateFilePath(repoRoot);
 
   if (!(await fs.pathExists(stateFile))) {
