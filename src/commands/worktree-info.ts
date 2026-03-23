@@ -1,32 +1,7 @@
 import { Command } from 'commander';
 import path from 'path';
 import fs from 'fs-extra';
-import readline from 'readline';
 import { resolveBarePath, listFeatureWorktrees, type WorktreeEntry } from '../utils/worktree.js';
-
-async function prompt(question: string): Promise<string> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
-
-async function selectWorktree(entries: WorktreeEntry[]): Promise<WorktreeEntry> {
-  console.log('\nMultiple feature worktrees found:');
-  entries.forEach((e, i) => {
-    console.log(`  ${i + 1}) ${e.featureName} (${e.branch})`);
-  });
-  const answer = await prompt(`Select a feature [1-${entries.length}]: `);
-  const index = parseInt(answer, 10) - 1;
-  if (index < 0 || index >= entries.length || isNaN(index)) {
-    console.error('Invalid selection.');
-    process.exit(1);
-  }
-  return entries[index];
-}
 
 async function runWorktreeInfo(featureName: string | undefined): Promise<void> {
   const cwd = process.cwd();
@@ -59,7 +34,9 @@ async function runWorktreeInfo(featureName: string | undefined): Promise<void> {
       entry = entries[0];
     }
     else {
-      entry = await selectWorktree(entries);
+      console.error('Multiple feature worktrees found. Re-run with a feature name:');
+      entries.forEach(e => console.error(`  - ${e.featureName} (${e.branch})`));
+      process.exit(1);
     }
   }
 
