@@ -9,8 +9,8 @@ export default {
   },
   plugins: [
     typescript({
-      tsconfig: './tsconfig.json',
+      tsconfig: './tsconfig.build.json',
     }),
   ],
-  external: ['commander', 'fs-extra', 'path', 'fs', 'url', 'child_process', '@inquirer/select'],
+  external: ['commander', 'fs-extra', 'path', 'fs', 'url', 'child_process', 'readline', '@inquirer/select', '@inquirer/checkbox'],
 };

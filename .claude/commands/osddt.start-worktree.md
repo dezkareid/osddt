@@ -1,0 +1,114 @@
+---
+description: "Start a new feature using a git worktree for parallel development"
+---
+
+## Context
+
+Before proceeding, run the following command and parse the JSON output to get the current branch and date:
+
+```
+npx osddt meta-info
+```
+
+## Repository Configuration
+
+Before proceeding, read the `.osddtrc` file in the root of the repository to determine the project path.
+
+```json
+// .osddtrc example
+{ "repoType": "monorepo" | "single" }
+```
+
+- If `repoType` is `"single"`: the project path is the repository root.
+- If `repoType` is `"monorepo"`: ask the user which package to work on (e.g. `packages/my-package`), then use `<repo-root>/<package>` as the project path.
+
+## Working Directory
+
+All generated files live under `<project-path>/working-on/<feature-name>/`.
+
+> All file paths in the instructions below are relative to `<project-path>/working-on/<feature-name>/`.
+
+## Instructions
+
+The argument provided is: $ARGUMENTS
+
+Determine the branch name using the following logic:
+
+1. If $ARGUMENTS looks like a branch name (e.g. `feat/my-feature`, `fix/some-bug`, `my-feature-branch` — no spaces, kebab-case or slash-separated), use it as-is.
+2. Otherwise treat $ARGUMENTS as a human-readable feature description, convert it to a feature name, and use the format `feat/<derived-name>` as the branch name.
+
+Apply the constraints below to the feature name (the segment after the last `/`) before using it:
+
+### Feature Name Constraints
+
+When deriving a feature name from a description:
+
+- Use only lowercase letters, digits, and hyphens (`a-z`, `0-9`, `-`)
+- Replace spaces and special characters with hyphens
+- Remove consecutive hyphens (e.g. `--` → `-`)
+- Remove leading and trailing hyphens
+- **Maximum length: 30 characters** — if the derived name exceeds 30 characters, truncate at the last hyphen boundary before or at the 30th character
+- If the input is already a valid branch name (no spaces, kebab-case or slash-separated), apply the 30-character limit to the last segment only (after the last `/`)
+- Reject (and ask the user to provide a shorter name) if no valid name can be derived after truncation
+
+**Examples:**
+
+| Input | Derived feature name |
+| ----------------------------------------------------- | ---------------------------- |
+| `Add user authentication` | `add-user-authentication` |
+| `Implement real-time notifications for dashboard` | `implement-real-time` |
+| `feat/add-user-authentication` | `add-user-authentication` |
+| `feat/implement-real-time-notifications-for-dashboard` | `implement-real-time` |
+
+
+Once the branch name is determined:
+
+3. Run the following command to create the git worktree, scaffold the working directory, and register the feature in the state file:
+
+```
+npx osddt start-worktree <feature-name>
+```
+
+For monorepos, pass the package path:
+
+```
+npx osddt start-worktree <feature-name> --dir <package-path>
+```
+
+4. Report the branch name, worktree path, and working directory shown in the command output.
+
+## Custom Context
+
+Run the following command and, if it returns content, use it as additional context before proceeding:
+
+```
+npx osddt context start
+```
+
+If the command returns no output, skip this section and continue.
+
+## Arguments
+
+$ARGUMENTS
+
+## Next Step
+
+- If $ARGUMENTS was a **human-readable description** (not a branch name):
+
+  Your description will be used as the starting point for the spec. Run:
+
+  ```
+  /osddt.spec
+  ```
+
+  > You can append more details if you want the spec to capture additional context.
+
+- If $ARGUMENTS was a **branch name** (or no arguments were provided):
+
+  Run the following command to write the feature specification:
+
+  ```
+  /osddt.spec <brief feature description, e.g. "add user authentication with JWT">
+  ```
+
+  > Add a short description of what you're building so the spec has the right starting point.
