@@ -1,3 +1,10 @@
+## [1.11.8](https://github.com/dezkareid/osddt/compare/osddt-v1.11.7...osddt-v1.11.8) (2026-03-23)
+
+
+### Bug Fixes
+
+* replace interactive worktree-info selection with non-interactive list ([15810ae](https://github.com/dezkareid/osddt/commit/15810ae805d4d3ad579576da835a75afb7f761b0))
+
 ## [1.11.7](https://github.com/dezkareid/osddt/compare/osddt-v1.11.6...osddt-v1.11.7) (2026-03-23)
 
 
