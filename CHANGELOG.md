@@ -1,3 +1,10 @@
+## [1.11.3](https://github.com/dezkareid/osddt/compare/osddt-v1.11.2...osddt-v1.11.3) (2026-03-23)
+
+
+### Bug Fixes
+
+* introduce bare-path configuration in .osddtrc for explicit bare repository location ([d0c0427](https://github.com/dezkareid/osddt/commit/d0c04272a9bbd73a0c44a7b0d2add208686158c9))
+
 ## [1.11.2](https://github.com/dezkareid/osddt/compare/osddt-v1.11.1...osddt-v1.11.2) (2026-03-23)
 
 
