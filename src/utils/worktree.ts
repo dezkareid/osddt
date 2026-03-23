@@ -57,9 +57,7 @@ export function findWorktreeByFeature(barePath: string, featureName: string): st
     if (!match) continue;
     const worktreePath = match[1].trim();
     const basename = path.basename(worktreePath);
-    const segments = basename.split('-');
-    const suffixMatch = segments.length > 1 && basename.slice(basename.indexOf('-') + 1) === featureName;
-    if (basename === featureName || suffixMatch) {
+    if (basename === featureName) {
       return worktreePath;
     }
   }

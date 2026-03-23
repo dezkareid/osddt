@@ -28,7 +28,7 @@ describe('start-worktree command', () => {
       });
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         if (String(p).endsWith('.osddtrc')) return true;
-        if (String(p).endsWith('.bare-my-feature')) return false;
+        if (String(p).endsWith('.bare/my-feature')) return false;
         return false;
       });
       vi.mocked(fs.readJson).mockResolvedValue({
@@ -51,17 +51,15 @@ describe('start-worktree command', () => {
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('feat/my-feature'));
     });
 
-    it('should place the worktree in the parent of bare-path (i.e. the project folder)', async () => {
+    it('should place the worktree inside .bare as <barePath>/<featureName>', async () => {
       vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = startWorktreeCommand();
       await cmd.parseAsync(['my-feature'], { from: 'user' });
 
-      // worktreePath = path.join(path.dirname('.bare'), 'myrepo-my-feature')
-      // repoName('.bare') = '.bare', so worktree = '/home/user/myproject/.bare-my-feature'
-      // Actually repoName is path.basename('/home/user/myproject/.bare') = '.bare'
+      // worktreePath = path.join(barePath, featureName) = '/home/user/myproject/.bare/my-feature'
       expect(mockedExecSync).toHaveBeenCalledWith(
-        expect.stringMatching(/worktree add.*my-feature/),
+        expect.stringContaining('/home/user/myproject/.bare/my-feature'),
         expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
       );
     });
@@ -102,7 +100,7 @@ describe('start-worktree command', () => {
   describe('given a feature that already exists in git worktree list', () => {
     beforeEach(() => {
       vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
-      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject-my-feature');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject/.bare/my-feature');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         if (String(p).endsWith('.osddtrc')) return false;
         return true;

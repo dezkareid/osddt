@@ -89,7 +89,7 @@ describe('findWorktreeByFeature', () => {
     'HEAD abc123',
     'branch refs/heads/main',
     '',
-    'worktree /home/user/myproject-my-feature',
+    'worktree /home/user/myproject/.bare/my-feature',
     'HEAD def456',
     'branch refs/heads/feat/my-feature',
     '',
@@ -98,7 +98,7 @@ describe('findWorktreeByFeature', () => {
   it('should return the worktree path matching the feature name', () => {
     mockedExecSync.mockReturnValue(PORCELAIN_OUTPUT as unknown as Buffer);
     const result = findWorktreeByFeature('/home/user/myproject/.bare', 'my-feature');
-    expect(result).toBe('/home/user/myproject-my-feature');
+    expect(result).toBe('/home/user/myproject/.bare/my-feature');
   });
 
   it('should return undefined when no worktree matches', () => {
