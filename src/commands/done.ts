@@ -13,9 +13,13 @@ function todayPrefix(): string {
 }
 
 async function runDone(featureName: string, cwd: string, worktree: boolean): Promise<void> {
-  const src = path.join(cwd, 'working-on', featureName);
+  const barePath = worktree ? await resolveBarePath(process.cwd()) : undefined;
+  const worktreePath = worktree ? findWorktreeByFeature(barePath!, featureName) : undefined;
+
+  const projectDir = worktreePath ?? cwd;
+  const src = path.join(projectDir, 'working-on', featureName);
   const destName = `${todayPrefix()}-${featureName}`;
-  const dest = path.join(cwd, 'done', destName);
+  const dest = path.join(projectDir, 'done', destName);
 
   if (!(await fs.pathExists(src))) {
     console.error(`Error: working-on/${featureName} does not exist.`);
@@ -27,9 +31,6 @@ async function runDone(featureName: string, cwd: string, worktree: boolean): Pro
   console.log(`Moved: working-on/${featureName} → done/${destName}`);
 
   if (!worktree) return;
-
-  const barePath = await resolveBarePath(process.cwd());
-  const worktreePath = findWorktreeByFeature(barePath, featureName);
 
   if (!worktreePath) {
     console.error(`Warning: No worktree found for "${featureName}". Skipping worktree cleanup.`);

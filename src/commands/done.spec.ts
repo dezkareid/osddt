@@ -56,7 +56,7 @@ describe('done command', () => {
       vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject/.bare/my-feature');
       vi.mocked(fs.pathExists).mockImplementation(async (p) => {
         const s = String(p);
-        if (s.endsWith('my-feature') && s.includes('working-on')) return true;
+        if (s.includes('working-on/my-feature')) return true;
         if (s === '/home/user/myproject/.bare/my-feature') return true;
         return false;
       });
@@ -80,6 +80,22 @@ describe('done command', () => {
         expect.objectContaining({ cwd: '/home/user/myproject/.bare' }),
       );
       consoleSpy.mockRestore();
+    });
+
+    it('should use the worktree-derived path for src, ignoring --dir', async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => { });
+
+      const cmd = doneCommand();
+      await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
+
+      expect(fs.move).toHaveBeenCalledWith(
+        expect.stringContaining('/home/user/myproject/.bare/my-feature/working-on/my-feature'),
+        expect.any(String),
+      );
+      expect(fs.move).not.toHaveBeenCalledWith(
+        expect.stringContaining('/tmp/project'),
+        expect.any(String),
+      );
     });
   });
 

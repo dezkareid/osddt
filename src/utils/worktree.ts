@@ -2,6 +2,13 @@ import path from 'path';
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
 
+export interface WorktreeEntry {
+  featureName: string;
+  branch: string;
+  worktreePath: string;
+  workingDir: string;
+}
+
 export interface CheckResult {
   label: string;
   passed: boolean;
@@ -83,4 +90,28 @@ export async function runWorktreeChecks(barePath: string): Promise<boolean> {
   }
 
   return results.every(r => r.passed);
+}
+
+export function listFeatureWorktrees(barePath: string, mainBranch: string): WorktreeEntry[] {
+  const output = execSync('git worktree list --porcelain', { cwd: barePath, encoding: 'utf-8' });
+  const blocks = output.trim().split(/\n\n+/);
+  const entries: WorktreeEntry[] = [];
+
+  for (const block of blocks) {
+    const pathMatch = block.match(/^worktree (.+)$/m);
+    const branchMatch = block.match(/^branch (.+)$/m);
+    if (!pathMatch) continue;
+
+    const worktreePath = pathMatch[1].trim();
+    const featureName = path.basename(worktreePath);
+
+    if (featureName === mainBranch) continue;
+
+    const branch = branchMatch ? branchMatch[1].trim().replace(/^refs\/heads\//, '') : featureName;
+    const workingDir = path.join(worktreePath, 'working-on', featureName);
+
+    entries.push({ featureName, branch, worktreePath, workingDir });
+  }
+
+  return entries;
 }
