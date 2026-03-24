@@ -61,7 +61,7 @@ Use the following logic to determine the working directory:
 
 ## Instructions
 
-Check the working directory `<project-path>/working-on/<feature-name>` for the files listed below **in order** to determine the current phase. Use the first matching condition:
+Check the working directory for the files listed below **in order** to determine the current phase. Use the `workingDir` resolved above (from `worktree-info` in worktree mode, or `{project-path}/working-on/{feature-name}` in standard mode). Use the first matching condition:
 
 | Condition | Current phase | Run next |
 | --------- | ------------- | -------- |
