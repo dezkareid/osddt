@@ -82,18 +82,14 @@ describe('done command', () => {
       consoleSpy.mockRestore();
     });
 
-    it('should use the worktree-derived path for src, ignoring --dir', async () => {
+    it('should use --dir for src path (not the worktree root)', async () => {
       vi.spyOn(console, 'log').mockImplementation(() => { });
 
       const cmd = doneCommand();
       await cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' });
 
       expect(fs.move).toHaveBeenCalledWith(
-        expect.stringContaining('/home/user/myproject/.bare/my-feature/working-on/my-feature'),
-        expect.any(String),
-      );
-      expect(fs.move).not.toHaveBeenCalledWith(
-        expect.stringContaining('/tmp/project'),
+        expect.stringContaining('/tmp/project/working-on/my-feature'),
         expect.any(String),
       );
     });
