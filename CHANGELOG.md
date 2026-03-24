@@ -1,3 +1,10 @@
+## [1.11.10](https://github.com/dezkareid/osddt/compare/osddt-v1.11.9...osddt-v1.11.10) (2026-03-24)
+
+
+### Bug Fixes
+
+* working tree for monorepo ([fcc4b2b](https://github.com/dezkareid/osddt/commit/fcc4b2bde66c735881b0bd24a4ef2612142c960c))
+
 ## [1.11.9](https://github.com/dezkareid/osddt/compare/osddt-v1.11.8...osddt-v1.11.9) (2026-03-24)
 
 
