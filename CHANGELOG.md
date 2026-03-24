@@ -1,3 +1,10 @@
+## [1.11.12](https://github.com/dezkareid/osddt/compare/osddt-v1.11.11...osddt-v1.11.12) (2026-03-24)
+
+
+### Bug Fixes
+
+* done path for worktree ([bb8a5c2](https://github.com/dezkareid/osddt/commit/bb8a5c245508c010014e032ad97003b2a1a1a8db))
+
 ## [1.11.11](https://github.com/dezkareid/osddt/compare/osddt-v1.11.10...osddt-v1.11.11) (2026-03-24)
 
 
