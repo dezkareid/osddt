@@ -44,17 +44,19 @@ Use the following logic to determine the working directory:
 1. If arguments were provided, derive the feature name from them:
    - If the argument looks like a branch name (no spaces, kebab-case or slash-separated), use the last segment (after the last `/`, or the full value if no `/` is present).
    - Otherwise convert it to a feature name following the Feature Name Constraints.
-2. Run `npx osddt worktree-info` (pass `<feature-name>` as argument if one was derived, otherwise run without arguments):
-   - exit code **0**: parse the JSON and use the returned `workingDir` as the working directory.
-   - exit code **1**: no matching worktree found — fall back to the standard resolution below.
+2. Run `npx osddt worktree-info` (pass `<feature-name>` as argument if one was derived, otherwise run without arguments). Parse the JSON from **stdout** and handle based on the output:
+   - JSON contains `workingDir`: use it as the working directory and continue.
+   - JSON contains `{ "error": "multiple", "worktrees": [...] }`: present the list to the user and ask them to choose a feature, then use the chosen entry's details as the working context — do not re-run the command.
+   - JSON contains `{ "error": "none" }`: inform the user that no feature worktrees were found and stop.
+   - JSON contains `{ "error": "not-found" }`: inform the user that the specified feature was not found in any worktree and stop.
 
-**If `worktree-repository` is absent in `.osddtrc` (standard mode), or after a worktree-info fallback:**
+**If `worktree-repository` is absent in `.osddtrc` (standard mode):**
 
 1. If arguments were provided, derive the feature name (same rules as above).
 2. If **no arguments were provided**:
    - List all folders under `<project-path>/working-on/`.
    - If there is **only one folder**, use it automatically and inform the user.
-   - If there are **multiple folders**, present the list to the user and ask them to pick one.
+   - If there are **multiple folders**, display the list as a numbered enumeration, then **stop** and instruct the user to re-run the command with the chosen feature name as an explicit argument (e.g. `/osddt.continue <feature-name>`).
    - If there are **no folders**, inform the user that no in-progress features were found and stop.
 
 ## Instructions

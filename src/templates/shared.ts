@@ -143,9 +143,11 @@ Use the following logic to determine the working directory:
 1. If arguments were provided, derive the feature name from them:
    - If the argument looks like a branch name (no spaces, kebab-case or slash-separated), use the last segment (after the last \`/\`, or the full value if no \`/\` is present).
    - Otherwise convert it to a feature name following the Feature Name Constraints.
-2. Run \`${npxCommand} worktree-info\` (pass \`<feature-name>\` as argument if one was derived, otherwise run without arguments):
-   - exit code **0**: parse the JSON and use the returned \`workingDir\` as the working directory.
-   - exit code **1**: display the error output from \`worktree-info\` to the user, then **stop** and instruct them to re-run the command with the chosen feature name as an explicit argument (e.g. \`/osddt.continue <feature-name>\`).
+2. Run \`${npxCommand} worktree-info\` (pass \`<feature-name>\` as argument if one was derived, otherwise run without arguments). Parse the JSON from **stdout** and handle based on the output:
+   - JSON contains \`workingDir\`: use it as the working directory and continue.
+   - JSON contains \`{ "error": "multiple", "worktrees": [...] }\`: present the list to the user and ask them to choose a feature, then use the chosen entry's details as the working context — do not re-run the command.
+   - JSON contains \`{ "error": "none" }\`: inform the user that no feature worktrees were found and stop.
+   - JSON contains \`{ "error": "not-found" }\`: inform the user that the specified feature was not found in any worktree and stop.
 
 **If \`worktree-repository\` is absent in \`.osddtrc\` (standard mode):**
 

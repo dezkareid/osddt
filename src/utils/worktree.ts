@@ -106,8 +106,9 @@ export function listFeatureWorktrees(barePath: string, mainBranch: string): Work
     const featureName = path.basename(worktreePath);
 
     if (featureName === mainBranch) continue;
+    if (!branchMatch) continue;
 
-    const branch = branchMatch ? branchMatch[1].trim().replace(/^refs\/heads\//, '') : featureName;
+    const branch = branchMatch[1].trim().replace(/^refs\/heads\//, '');
     const workingDir = path.join(worktreePath, 'working-on', featureName);
 
     entries.push({ featureName, branch, worktreePath, workingDir });

@@ -21,21 +21,20 @@ async function runWorktreeInfo(featureName: string | undefined): Promise<void> {
   if (featureName) {
     entry = entries.find(e => e.featureName === featureName);
     if (!entry) {
-      console.error(`No worktree found for feature: ${featureName}`);
+      console.log(JSON.stringify({ error: 'not-found', featureName }));
       process.exit(1);
     }
   }
   else {
     if (entries.length === 0) {
-      console.error('No feature worktrees found.');
+      console.log(JSON.stringify({ error: 'none' }));
       process.exit(1);
     }
     else if (entries.length === 1) {
       entry = entries[0];
     }
     else {
-      console.error('Multiple feature worktrees found. Re-run with a feature name:');
-      entries.forEach(e => console.error(`  - ${e.featureName} (${e.branch})`));
+      console.log(JSON.stringify({ error: 'multiple', worktrees: entries.map(e => ({ featureName: e.featureName, branch: e.branch })) }));
       process.exit(1);
     }
   }

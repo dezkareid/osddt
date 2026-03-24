@@ -51,7 +51,8 @@ describe('worktree-info command', () => {
       vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
     });
 
-    it('should print an error and exit with code 1', async () => {
+    it('should print JSON { error: not-found } to stdout and exit with code 1', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
@@ -62,7 +63,8 @@ describe('worktree-info command', () => {
         cmd.parseAsync(['unknown-feature'], { from: 'user' }),
       ).rejects.toThrow('process.exit');
 
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('unknown-feature'));
+      expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ error: 'not-found', featureName: 'unknown-feature' }));
+      expect(errorSpy).not.toHaveBeenCalled();
       expect(exitSpy).toHaveBeenCalledWith(1);
     });
   });
@@ -100,9 +102,9 @@ describe('worktree-info command', () => {
       vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY, SECOND_ENTRY]);
     });
 
-    it('should print each feature name and branch to stderr and exit with code 1', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should print JSON { error: multiple, worktrees: [...] } to stdout and exit with code 1', async () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
       });
@@ -112,10 +114,14 @@ describe('worktree-info command', () => {
         cmd.parseAsync([], { from: 'user' }),
       ).rejects.toThrow('process.exit');
 
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Multiple feature worktrees found'));
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('my-feature'));
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('other-feature'));
-      expect(logSpy).not.toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalledWith(JSON.stringify({
+        error: 'multiple',
+        worktrees: [
+          { featureName: 'my-feature', branch: 'feat/my-feature' },
+          { featureName: 'other-feature', branch: 'feat/other-feature' },
+        ],
+      }));
+      expect(errorSpy).not.toHaveBeenCalled();
       expect(exitSpy).toHaveBeenCalledWith(1);
     });
   });
@@ -125,7 +131,8 @@ describe('worktree-info command', () => {
       vi.mocked(listFeatureWorktrees).mockReturnValue([]);
     });
 
-    it('should print an error and exit with code 1', async () => {
+    it('should print JSON { error: none } to stdout and exit with code 1', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
         throw new Error('process.exit');
@@ -136,7 +143,8 @@ describe('worktree-info command', () => {
         cmd.parseAsync([], { from: 'user' }),
       ).rejects.toThrow('process.exit');
 
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('No feature worktrees found'));
+      expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ error: 'none' }));
+      expect(errorSpy).not.toHaveBeenCalled();
       expect(exitSpy).toHaveBeenCalledWith(1);
     });
   });
