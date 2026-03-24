@@ -233,9 +233,11 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('exit');
     });
 
-    it('should instruct stopping and re-running with a feature name when worktree-info exits with code 1', () => {
+    it('should instruct handling structured JSON output from worktree-info without re-running the command', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('code **1**');
+      expect(body).toContain('"error": "multiple"');
+      expect(body).toContain('"error": "none"');
+      expect(body).toContain('"error": "not-found"');
       expect(body).not.toContain('fall back to the standard resolution');
     });
   });

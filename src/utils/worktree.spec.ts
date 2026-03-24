@@ -10,6 +10,7 @@ import {
   checkTargetWritable,
   resolveBarePath,
   findWorktreeByFeature,
+  listFeatureWorktrees,
 } from './worktree.js';
 
 const mockedExecSync = vi.mocked(execSync);
@@ -80,6 +81,55 @@ describe('resolveBarePath', () => {
     mockedExecSync.mockReturnValue('/home/user/myrepo\n' as unknown as Buffer);
     const result = await resolveBarePath('/home/user/myrepo');
     expect(result).toBe('/home/user/myrepo');
+  });
+});
+
+describe('listFeatureWorktrees', () => {
+  it('should return feature worktrees and exclude the bare repo entry (no branch line)', () => {
+    const porcelain = [
+      'worktree /repo/.bare',
+      'HEAD abc123',
+      'bare',
+      '',
+      'worktree /repo/.bare/my-feature',
+      'HEAD def456',
+      'branch refs/heads/feat/my-feature',
+      '',
+    ].join('\n');
+    mockedExecSync.mockReturnValue(porcelain as unknown as Buffer);
+    const result = listFeatureWorktrees('/repo/.bare', 'main');
+    expect(result).toHaveLength(1);
+    expect(result[0].featureName).toBe('my-feature');
+    expect(result[0].branch).toBe('feat/my-feature');
+  });
+
+  it('should exclude blocks without a branch line (bare/detached worktrees)', () => {
+    const porcelain = [
+      'worktree /repo/.bare',
+      'HEAD abc123',
+      'bare',
+      '',
+      'worktree /repo/.bare/my-feature',
+      'HEAD def456',
+      'branch refs/heads/feat/my-feature',
+      '',
+    ].join('\n');
+    mockedExecSync.mockReturnValue(porcelain as unknown as Buffer);
+    const result = listFeatureWorktrees('/repo/.bare', 'main');
+    expect(result).toHaveLength(1);
+    expect(result[0].featureName).toBe('my-feature');
+  });
+
+  it('should return an empty array when no feature worktrees exist', () => {
+    const porcelain = [
+      'worktree /repo/.bare',
+      'HEAD abc123',
+      'bare',
+      '',
+    ].join('\n');
+    mockedExecSync.mockReturnValue(porcelain as unknown as Buffer);
+    const result = listFeatureWorktrees('/repo/.bare', 'main');
+    expect(result).toHaveLength(0);
   });
 });
 
