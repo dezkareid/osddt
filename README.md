@@ -10,10 +10,10 @@ Other spec driven development tool but for monorepo
 | `@dezkareid/osddt setup --worktree-repository <url>`                             | Setup with worktree workflow enabled                          |
 | `@dezkareid/osddt meta-info`                                                     | Output current branch and date as JSON                        |
 | `@dezkareid/osddt done <feature-name> --dir <project-path>`                      | Move `working-on/<feature>` to `done/<feature>`               |
-| `@dezkareid/osddt done <feature-name> --dir <project-path> --worktree`           | Archive feature, remove git worktree, and clean state file    |
+| `@dezkareid/osddt done <feature-name> --dir <project-path> --worktree`           | Archive feature and remove the git worktree                   |
 | `@dezkareid/osddt update`                                                        | Regenerate agent command files from the existing `.osddtrc`   |
 | `@dezkareid/osddt start-worktree <feature-name>`                                 | Create a git worktree for a feature and scaffold working-on/  |
-| `@dezkareid/osddt start-worktree <feature-name> --dir <package-path>`            | Same, specifying the package path in a monorepo               |
+| `@dezkareid/osddt start-worktree <feature-name> --dir <package-path>`            | Same, specifying the package subdirectory in a monorepo       |
 | `@dezkareid/osddt worktree-info <feature-name>`                                  | Look up worktree paths for a feature (JSON output)            |
 
 ### `osddt setup` options
@@ -25,7 +25,7 @@ Other spec driven development tool but for monorepo
 | `--worktree-repository <url>` | any git URL | Enable worktree workflow and save the repository URL |
 | `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
 
-All flags are optional. Providing neither runs the fully interactive mode. Providing `--agents` and `--repo-type` together skips all standard prompts. Adding `--worktree-repository` also runs environment checks and initialises the worktree state file.
+All flags are optional. Providing neither runs the fully interactive mode. Providing `--agents` and `--repo-type` together skips all standard prompts. Adding `--worktree-repository` clones a bare repository, sets up the default branch worktree, runs environment checks, and writes all worktree config to `.osddtrc`.
 
 The selected agents and config are saved in `.osddtrc` so that `osddt update` can regenerate the correct files without prompting.
 
@@ -33,8 +33,15 @@ The selected agents and config are saved in `.osddtrc` so that `osddt update` ca
 // Standard mode
 { "repoType": "single", "agents": ["claude"] }
 
-// Worktree mode — the "worktree-repository" field enables the worktree workflow
-{ "repoType": "single", "agents": ["claude"], "worktree-repository": "https://github.com/org/repo.git" }
+// Worktree mode — written automatically by osddt setup --worktree-repository
+{
+  "repoType": "monorepo",
+  "agents": ["claude"],
+  "worktree-repository": "https://github.com/org/repo.git",
+  "bare-path": "/path/to/project/.bare",
+  "packageManager": "pnpm",
+  "mainBranch": "main"
+}
 ```
 
 ```bash
@@ -43,6 +50,9 @@ npx @dezkareid/osddt setup
 
 # Non-interactive (CI-friendly)
 npx @dezkareid/osddt setup --agents claude,gemini --repo-type single
+
+# Enable worktree workflow
+npx @dezkareid/osddt setup --agents claude --repo-type monorepo --worktree-repository https://github.com/org/repo.git
 ```
 
 ## Command Templates
@@ -122,16 +132,57 @@ flowchart LR
 
 #### Parallel feature workflow (git worktree)
 
-Enable worktree mode by providing the repository URL during setup:
+Enable worktree mode once during setup by providing the repository URL:
 
 ```bash
 npx @dezkareid/osddt setup --agents claude --repo-type single --worktree-repository https://github.com/org/repo.git
 ```
 
-This saves `"worktree-repository"` in `.osddtrc`, runs environment checks, and initialises the `.osddt-worktrees` state file. From that point on, `/osddt.start` automatically uses the worktree workflow:
+This clones a bare repository into `.bare/`, checks out the default branch as a linked worktree at `.bare/main/`, runs environment checks, and writes all config to `.osddtrc`. From that point on, `/osddt.start` automatically uses the worktree workflow — no further configuration needed.
+
+**Resulting directory structure after setup:**
+
+```
+project/               ← your working directory (contains .osddtrc, CLAUDE.md, GEMINI.md)
+└── .bare/
+    ├── main/          ← default branch checked out as a linked worktree
+    ├── add-payment-gateway/   ← feature worktree created by /osddt.start
+    └── fix-login-bug/         ← another feature worktree
+```
+
+For a **monorepo**, `working-on/` lives inside the package subdirectory within the worktree:
+
+```
+.bare/add-payment-gateway/
+├── apps/
+│   └── my-app/
+│       └── working-on/
+│           └── add-payment-gateway/   ← spec, plan, tasks live here
+└── packages/
+```
+
+**Example workflow (single repo):**
 
 ```
 /osddt.start add-payment-gateway
+# → creates .bare/add-payment-gateway/, checks out feat/add-payment-gateway
+# → scaffolds .bare/add-payment-gateway/working-on/add-payment-gateway/
+
+/osddt.spec
+/osddt.plan use Stripe SDK, REST endpoints
+/osddt.tasks
+/osddt.implement
+/osddt.done
+# → archives working-on/, removes the worktree from .bare/
+```
+
+**Example workflow (monorepo — prompts for package path):**
+
+```
+/osddt.start add-payment-gateway
+# → prompts: "Package path (e.g. apps/my-app):" → enter apps/payments
+# → creates .bare/add-payment-gateway/apps/payments/working-on/add-payment-gateway/
+
 /osddt.spec
 /osddt.plan use Stripe SDK, REST endpoints
 /osddt.tasks
@@ -139,21 +190,18 @@ This saves `"worktree-repository"` in `.osddtrc`, runs environment checks, and i
 /osddt.done
 ```
 
-The worktree is created as a sibling of your repo (e.g. `../my-repo-add-payment-gateway`). The `working-on/` planning folder lives inside the worktree alongside the code. When `osddt.done` runs, it archives the planning folder **and** removes the worktree automatically.
-
-You can customise the worktree base directory by adding `worktreeBase` to `.osddtrc`:
+You can customise the base directory where feature worktrees are created by adding `worktreeBase` to `.osddtrc` (defaults to the `bare-path`):
 
 ```json
 {
   "repoType": "single",
   "worktree-repository": "https://github.com/org/repo.git",
+  "bare-path": "/path/to/project/.bare",
   "worktreeBase": "/Users/me/worktrees"
 }
 ```
 
-Active worktrees are tracked in `.osddt-worktrees` (sibling to the repo root), a JSON array with entries containing `featureName`, `branch`, `worktreePath`, `workingDir`, and `repoRoot`. This file is the single source of truth used by `osddt.continue` and `osddt.done` to resolve the correct paths.
-
-> **Migration note**: If you previously used `osddt setup-worktree` or `/osddt.start-worktree`, those commands have been removed. Re-run `osddt setup --worktree-repository <url>` to configure the new unified workflow. Manually delete any `osddt.start-worktree.*` files from your agent command directories — `osddt update` will not regenerate them.
+Worktrees are tracked by git itself (`git worktree list`). `osddt.continue` and `osddt.done` call `npx @dezkareid/osddt worktree-info <feature-name>` at runtime to resolve the correct paths — no separate state file is required.
 
 #### Resuming after closing a session
 
