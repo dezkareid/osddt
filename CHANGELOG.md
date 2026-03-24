@@ -1,3 +1,10 @@
+## [1.11.9](https://github.com/dezkareid/osddt/compare/osddt-v1.11.8...osddt-v1.11.9) (2026-03-24)
+
+
+### Bug Fixes
+
+* issue with continue command ([45390f6](https://github.com/dezkareid/osddt/commit/45390f6ec73e19e416b71efc4b589e9813e44985))
+
 ## [1.11.8](https://github.com/dezkareid/osddt/compare/osddt-v1.11.7...osddt-v1.11.8) (2026-03-23)
 
 
