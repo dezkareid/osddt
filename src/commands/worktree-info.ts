@@ -9,13 +9,24 @@ async function resolveWorkingDir(worktreePath: string, featureName: string): Pro
   if (await fs.pathExists(path.join(worktreePath, target))) {
     return path.join(worktreePath, target);
   }
-  // Search one level deep (monorepo packages)
+  // Search up to two levels deep (monorepo packages, e.g. apps/my-app or packages/my-pkg)
   try {
-    const entries = await fs.readdir(worktreePath);
-    for (const entry of entries) {
-      const candidate = path.join(worktreePath, entry, target);
-      if (await fs.pathExists(candidate)) {
-        return candidate;
+    const topEntries = await fs.readdir(worktreePath);
+    for (const top of topEntries) {
+      const topCandidate = path.join(worktreePath, top, target);
+      if (await fs.pathExists(topCandidate)) {
+        return topCandidate;
+      }
+      // Second level (e.g. apps/collectstory/working-on/...)
+      const topStat = await fs.stat(path.join(worktreePath, top)).catch(() => null);
+      if (topStat?.isDirectory()) {
+        const subEntries = await fs.readdir(path.join(worktreePath, top)).catch(() => []);
+        for (const sub of subEntries) {
+          const subCandidate = path.join(worktreePath, top, sub, target);
+          if (await fs.pathExists(subCandidate)) {
+            return subCandidate;
+          }
+        }
       }
     }
   }
