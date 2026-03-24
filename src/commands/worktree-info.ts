@@ -3,6 +3,28 @@ import path from 'path';
 import fs from 'fs-extra';
 import { resolveBarePath, listFeatureWorktrees, type WorktreeEntry } from '../utils/worktree.js';
 
+async function resolveWorkingDir(worktreePath: string, featureName: string): Promise<string> {
+  const target = path.join('working-on', featureName);
+  // Check root first (single repo)
+  if (await fs.pathExists(path.join(worktreePath, target))) {
+    return path.join(worktreePath, target);
+  }
+  // Search one level deep (monorepo packages)
+  try {
+    const entries = await fs.readdir(worktreePath);
+    for (const entry of entries) {
+      const candidate = path.join(worktreePath, entry, target);
+      if (await fs.pathExists(candidate)) {
+        return candidate;
+      }
+    }
+  }
+  catch {
+    // worktreePath not accessible — fall through to default
+  }
+  return path.join(worktreePath, target);
+}
+
 async function runWorktreeInfo(featureName: string | undefined): Promise<void> {
   const cwd = process.cwd();
   const barePath = await resolveBarePath(cwd);
@@ -39,7 +61,8 @@ async function runWorktreeInfo(featureName: string | undefined): Promise<void> {
     }
   }
 
-  console.log(JSON.stringify({ worktreePath: entry.worktreePath, workingDir: entry.workingDir, branch: entry.branch }));
+  const workingDir = await resolveWorkingDir(entry.worktreePath, entry.featureName);
+  console.log(JSON.stringify({ worktreePath: entry.worktreePath, workingDir, branch: entry.branch }));
 }
 
 export function worktreeInfoCommand(): Command {
