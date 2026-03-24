@@ -1,3 +1,10 @@
+## [1.11.11](https://github.com/dezkareid/osddt/compare/osddt-v1.11.10...osddt-v1.11.11) (2026-03-24)
+
+
+### Bug Fixes
+
+* working directory resolution for worktree ([8a6a1e8](https://github.com/dezkareid/osddt/commit/8a6a1e8dc93409ea99e7fccee8a7e5a4537b353a))
+
 ## [1.11.10](https://github.com/dezkareid/osddt/compare/osddt-v1.11.9...osddt-v1.11.10) (2026-03-24)
 
 
