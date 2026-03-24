@@ -28,6 +28,9 @@ describe('worktree-info command', () => {
   describe('given a feature name argument that matches a worktree', () => {
     beforeEach(() => {
       vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
+      vi.mocked(fs.pathExists).mockImplementation(async p =>
+        p === FEATURE_ENTRY.workingDir,
+      );
     });
 
     it('should print JSON with worktreePath, workingDir, and branch', async () => {
@@ -72,6 +75,9 @@ describe('worktree-info command', () => {
   describe('given no argument and exactly one feature worktree', () => {
     beforeEach(() => {
       vi.mocked(listFeatureWorktrees).mockReturnValue([FEATURE_ENTRY]);
+      vi.mocked(fs.pathExists).mockImplementation(async p =>
+        p === FEATURE_ENTRY.workingDir,
+      );
     });
 
     it('should use the single entry automatically and print JSON', async () => {
