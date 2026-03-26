@@ -1,3 +1,10 @@
+## [1.11.13](https://github.com/dezkareid/osddt/compare/osddt-v1.11.12...osddt-v1.11.13) (2026-03-26)
+
+
+### Bug Fixes
+
+* **templates:** run done command before commit and push in worktree workflow ([b852f2b](https://github.com/dezkareid/osddt/commit/b852f2b42331bdfe4706ad1aee17b3ff8f1b5eb1))
+
 ## [1.11.12](https://github.com/dezkareid/osddt/compare/osddt-v1.11.11...osddt-v1.11.12) (2026-03-24)
 
 
