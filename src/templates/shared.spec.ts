@@ -623,6 +623,13 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(`${'npx @dezkareid/osddt'} done <feature-name> --dir <project-path>`);
     });
 
+    it('should instruct running done before commit and push', () => {
+      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
+      const doneIndex = body.indexOf('npx osddt done <feature-name>');
+      const pushIndex = body.indexOf('git -C <worktreePath> push --set-upstream origin <branch>');
+      expect(doneIndex).toBeLessThan(pushIndex);
+    });
+
     it('should inform the agent that the destination folder is prefixed with the date', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
       expect(body).toContain('YYYY-MM-DD');
