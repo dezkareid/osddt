@@ -25,6 +25,20 @@ async function runDone(featureName: string, cwd: string, worktree: boolean): Pro
     process.exit(1);
   }
 
+  if (worktree && worktreePath && (await fs.pathExists(worktreePath))) {
+    try {
+      const status = execSync('git status --porcelain', { cwd: worktreePath, encoding: 'utf8', stdio: 'pipe' });
+      if (status.trim().length > 0) {
+        console.error('Error: Worktree has uncommitted changes. Commit or stash them before running osddt done.');
+        process.exit(1);
+      }
+    }
+    catch {
+      console.error('Error: Could not verify worktree status. Ensure the worktree is a valid git repository and has no uncommitted changes before proceeding.');
+      process.exit(1);
+    }
+  }
+
   await fs.ensureDir(path.dirname(dest));
   await fs.move(src, dest);
   console.log(`Moved: working-on/${featureName} → done/${destName}`);
