@@ -1,3 +1,10 @@
+## [1.11.14](https://github.com/dezkareid/osddt/compare/osddt-v1.11.13...osddt-v1.11.14) (2026-03-27)
+
+
+### Bug Fixes
+
+* **done:** abort worktree removal when uncommitted changes exist ([e08178e](https://github.com/dezkareid/osddt/commit/e08178e44752a9baef60f630e57396bd4390ff1c))
+
 ## [1.11.13](https://github.com/dezkareid/osddt/compare/osddt-v1.11.12...osddt-v1.11.13) (2026-03-26)
 
 
