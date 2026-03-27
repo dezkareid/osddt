@@ -95,6 +95,46 @@ describe('done command', () => {
     });
   });
 
+  describe('given --worktree flag and worktree has uncommitted changes', () => {
+    beforeEach(() => {
+      vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
+      vi.mocked(findWorktreeByFeature).mockReturnValue('/home/user/myproject/.bare/my-feature');
+      vi.mocked(fs.pathExists).mockImplementation(async (p) => {
+        const s = String(p);
+        if (s.includes('working-on/my-feature')) return true;
+        if (s === '/home/user/myproject/.bare/my-feature') return true;
+        return false;
+      });
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.move).mockResolvedValue(undefined);
+      mockedExecSync.mockImplementation((cmd: string) => {
+        if (String(cmd).includes('git status --porcelain')) return ' M src/index.ts\n';
+        return '';
+      });
+    });
+
+    it('should exit with error and not move or remove anything', async () => {
+      vi.spyOn(console, 'log').mockImplementation(() => { });
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation((_code) => {
+        throw new Error('process.exit');
+      });
+
+      const cmd = doneCommand();
+      await expect(
+        cmd.parseAsync(['my-feature', '--dir', '/tmp/project', '--worktree'], { from: 'user' }),
+      ).rejects.toThrow('process.exit');
+
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('uncommitted changes'));
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(fs.move).not.toHaveBeenCalled();
+      expect(mockedExecSync).not.toHaveBeenCalledWith(
+        expect.stringContaining('git worktree remove'),
+        expect.any(Object),
+      );
+    });
+  });
+
   describe('given --worktree flag but worktree path no longer exists on filesystem', () => {
     beforeEach(() => {
       vi.mocked(resolveBarePath).mockResolvedValue('/home/user/myproject/.bare');
