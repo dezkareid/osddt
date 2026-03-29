@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/dezkareid/osddt/compare/osddt-v1.11.14...osddt-v1.12.0) (2026-03-29)
+
+
+### Features
+
+* add copy command ([e6abfd3](https://github.com/dezkareid/osddt/commit/e6abfd3c8b8f13efe2847bcac4930abce11aa47d))
+
 ## [1.11.14](https://github.com/dezkareid/osddt/compare/osddt-v1.11.13...osddt-v1.11.14) (2026-03-27)
 
 
