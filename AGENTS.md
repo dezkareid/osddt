@@ -105,7 +105,8 @@ osddt/
 │   │   ├── setup.ts               # `osddt setup` — prompts for agents & repo type (or reads --agents/--repo-type flags), writes command files and .osddtrc
 │   │   ├── meta-info.ts           # `osddt meta-info` — outputs { branch, date } as JSON (consumed by generated templates)
 │   │   ├── done.ts                # `osddt done <feature>` — moves working-on/<feature> → done/YYYY-MM-DD-<feature>
-│   │   └── update.ts              # `osddt update` — reads .osddtrc and regenerates agent command files for detected agents
+│   │   ├── update.ts              # `osddt update` — reads .osddtrc and regenerates agent command files for detected agents
+│   │   └── copy-env.ts            # `osddt copy-env` — copies environment files from a source to a target
 │   ├── templates/
 │   │   ├── shared.ts              # REPO_PREAMBLE, FEATURE_NAME_RULES, WORKING_DIR_STEP, and COMMAND_DEFINITIONS array
 │   │   ├── claude.ts              # Formats COMMAND_DEFINITIONS as Markdown (.claude/commands/osddt.<name>.md)
@@ -169,6 +170,8 @@ The selected agents are saved in `.osddtrc` alongside `repoType`. When `osddt up
 | `npx @dezkareid/osddt start-worktree <feature-name> --dir <package-path>`                      | External      | Same, specifying the package path in a monorepo               |
 | `osddt worktree-info <feature-name>`                                                           | Local dev     | Look up worktree paths for a feature (JSON output)            |
 | `npx @dezkareid/osddt worktree-info <feature-name>`                                            | External      | Look up worktree paths for a feature (JSON output)            |
+| `osddt copy-env --target <path>`                                                               | Local dev     | Copy environment files to a target directory                  |
+| `npx @dezkareid/osddt copy-env --target <path>`                                                | External      | Copy environment files to a target directory                  |
 
 #### `osddt setup` options
 
@@ -180,6 +183,29 @@ The selected agents are saved in `.osddtrc` alongside `repoType`. When `osddt up
 | `-d, --dir <directory>` | any path | Target directory (defaults to current working directory) |
 
 All flags are optional. Providing neither runs the fully interactive mode. When `--worktree-repository` is provided, a bare clone is created at `.bare/`, the default branch is checked out as a linked worktree, environment checks run, and all config is written to `.osddtrc`.
+
+#### `osddt copy-env` options
+
+Copies environment files from a source directory (configured in `.osddtrc` or via `--source`) to a target directory.
+
+| Flag | Values | Description |
+| ---- | ------ | ----------- |
+| `--source <path>` | any path | Source directory containing environment files |
+| `--target <path>` | any path | Target directory to copy files to (required) |
+| `--pattern <globs>` | comma-separated globs | Patterns to match files (default: `.env*`) |
+| `--force` | - | Overwrite existing files in target |
+| `--dry-run` | - | Print files that would be copied without writing them |
+
+**Configuration in `.osddtrc`:**
+
+```json
+{
+  "copy-env": {
+    "source": "/path/to/global/env/files",
+    "pattern": ".env*"
+  }
+}
+```
 
 ### Command Templates
 

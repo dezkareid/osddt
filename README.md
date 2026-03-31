@@ -15,6 +15,7 @@ Other spec driven development tool but for monorepo
 | `@dezkareid/osddt start-worktree <feature-name>`                                 | Create a git worktree for a feature and scaffold working-on/  |
 | `@dezkareid/osddt start-worktree <feature-name> --dir <package-path>`            | Same, specifying the package subdirectory in a monorepo       |
 | `@dezkareid/osddt worktree-info <feature-name>`                                  | Look up worktree paths for a feature (JSON output)            |
+| `@dezkareid/osddt copy-env --target <path>`                                      | Copy environment files to a target directory                  |
 
 ### `osddt setup` options
 
@@ -53,6 +54,29 @@ npx @dezkareid/osddt setup --agents claude,gemini --repo-type single
 
 # Enable worktree workflow
 npx @dezkareid/osddt setup --agents claude --repo-type monorepo --worktree-repository https://github.com/org/repo.git
+```
+
+### `osddt copy-env` options
+
+Copies environment files from a source directory (configured in `.osddtrc` or via `--source`) to a target directory.
+
+| Flag | Values | Description |
+| ---- | ------ | ----------- |
+| `--source <path>` | any path | Source directory containing environment files |
+| `--target <path>` | any path | Target directory to copy files to (required) |
+| `--pattern <globs>` | comma-separated globs | Patterns to match files (default: `.env*`) |
+| `--force` | - | Overwrite existing files in target |
+| `--dry-run` | - | Print files that would be copied without writing them |
+
+**Configuration in `.osddtrc`:**
+
+```json
+{
+  "copy-env": {
+    "source": "/path/to/global/env/files",
+    "pattern": ".env*"
+  }
+}
 ```
 
 ## Command Templates
