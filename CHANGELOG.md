@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/dezkareid/osddt/compare/osddt-v1.12.0...osddt-v1.12.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* step done ([efcf03b](https://github.com/dezkareid/osddt/commit/efcf03bbcc9dd91b2a8674920dd310caf028a1bc))
+
 # [1.12.0](https://github.com/dezkareid/osddt/compare/osddt-v1.11.14...osddt-v1.12.0) (2026-03-29)
 
 
