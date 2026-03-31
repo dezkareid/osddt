@@ -2,56 +2,64 @@
 description: "Mark a feature as done and move it from working-on to done"
 ---
 
-## Instructions
+## Step 1 — Verify tasks
 
-1. Confirm all tasks in `osddt.tasks.md` are checked off (`- [x]`)
-2. Run the following command to check whether this feature uses a git worktree:
+Confirm all tasks in `osddt.tasks.md` are checked off (`- [x]`).
+
+## Step 2 — Detect feature type
 
 ```
 npx osddt worktree-info <feature-name>
 ```
 
-3. Based on the result:
+- **Exit code 1** → standard feature. Follow **[If standard feature]** below.
+- **Exit code 0** → worktree feature. Follow **[If worktree feature]** below.
 
-   **If it exits with code 1 (standard feature):** use the project path from `.osddtrc`, then run:
+## If standard feature
+
+Run the done command using the project path from `.osddtrc`:
+
+```
+npx osddt done <feature-name> --dir <project-path>
+```
+
+Then skip to **[Step 3 — Report]**.
+
+## If worktree feature
+
+Parse the JSON output to get `worktreePath` and `branch`. Derive `<project-path>` from `workingDir`.
+
+Run the done command to archive the working-on folder:
+
+```
+npx osddt done <feature-name> --dir <project-path>
+```
+
+Then check for uncommitted changes:
+
+```
+git -C <worktreePath> status --porcelain
+```
+
+If there are **uncommitted changes**:
+1. Run `git -C <worktreePath> diff` to inspect them.
+2. Derive a concise commit message in **conventional commit** format (e.g. `feat: add payment gateway integration`) based on the diff.
+3. Present the proposed message to the user: _"Use this commit message, or provide your own?"_
+4. Once confirmed, commit:
    ```
-   npx osddt done <feature-name> --dir <project-path>
-   ```
-   Skip to step 8.
-
-   **If it exits with code 0 (worktree feature):** parse the JSON to get `worktreePath` and `branch`, derive `<project-path>` from `workingDir`, then continue below.
-
-4. Check for uncommitted changes inside the worktree:
-
-   ```
-   git -C <worktreePath> status --porcelain
+   git -C <worktreePath> add -A
+   git -C <worktreePath> commit -m "<confirmed-message>"
    ```
 
-5. If there are **uncommitted changes**:
-   1. Run `git -C <worktreePath> diff` to inspect them.
-   2. Derive a concise commit message in **conventional commit** format (e.g. `feat: add payment gateway integration`) based on the diff.
-   3. Present the proposed message to the user: _"Use this commit message, or provide your own?"_
-   4. Once confirmed, commit:
-      ```
-      git -C <worktreePath> add -A
-      git -C <worktreePath> commit -m "<confirmed-message>"
-      ```
+Push the branch to remote:
 
-6. Push the branch to remote (covers both first push and subsequent pushes):
+```
+git -C <worktreePath> push --set-upstream origin <branch>
+```
 
-   ```
-   git -C <worktreePath> push --set-upstream origin <branch>
-   ```
+## Step 3 — Report
 
-7. Run the done command with the `--worktree` flag:
-   ```
-   npx osddt done <feature-name> --dir <project-path> --worktree
-   ```
-
-8. The command will automatically prefix the destination folder name with today's date in `YYYY-MM-DD` format.
-   For example, `working-on/feature-a` will be moved to `done/YYYY-MM-DD-feature-a`.
-
-9. Report the result of the command, including the full destination path
+Report the result of the command, including the full destination path.
 
 ## Custom Context
 
