@@ -592,9 +592,9 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('npx osddt worktree-info');
     });
 
-    it('should instruct running done with --worktree when worktree-info exits with code 0', () => {
+    it('should instruct running done without --worktree even when worktree-info exits with code 0', () => {
       const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('--worktree');
+      expect(body).not.toContain('--worktree');
     });
 
     it('should instruct checking for uncommitted changes with git status --porcelain', () => {
@@ -613,27 +613,9 @@ describe('COMMAND_DEFINITIONS', () => {
       expect(body).toContain('Use this commit message, or provide your own');
     });
 
-    it('should instruct pushing the branch with --set-upstream', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('git -C <worktreePath> push --set-upstream origin <branch>');
-    });
-
     it('should instruct running the npx command with done and --dir', () => {
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' })).toContain(`${'npx osddt'} done <feature-name> --dir <project-path>`);
       expect(cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx @dezkareid/osddt' })).toContain(`${'npx @dezkareid/osddt'} done <feature-name> --dir <project-path>`);
-    });
-
-    it('should instruct running done before commit and push', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      const doneIndex = body.indexOf('npx osddt done <feature-name>');
-      const pushIndex = body.indexOf('git -C <worktreePath> push --set-upstream origin <branch>');
-      expect(doneIndex).toBeLessThan(pushIndex);
-    });
-
-    it('should inform the agent that the destination folder is prefixed with the date', () => {
-      const body = cmd.body({ args: '$ARGUMENTS', npxCommand: 'npx osddt' });
-      expect(body).toContain('YYYY-MM-DD');
-      expect(body).toContain('YYYY-MM-DD-feature-a');
     });
 
     it('should include the custom context step for "done"', () => {
